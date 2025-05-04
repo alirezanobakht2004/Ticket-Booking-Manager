@@ -16,3 +16,9 @@ CREATE TABLE IF NOT EXISTS report (
     FOREIGN KEY (ticket_id) REFERENCES ticket(ticket_id),
     FOREIGN KEY (payment_id) REFERENCES payment(payment_id)
 );
+
+
+
+ALTER TABLE ticket
+  MODIFY departure_time DATETIME          NOT NULL,
+  MODIFY arrival_time   DATETIME          NOT NULL;

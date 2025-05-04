@@ -3,7 +3,7 @@
 DB_USER="root"
 DB_PASS="" 
 
-SQL_FOLDER="./sql_queries/"
+SQL_FOLDER="create_tables/"
 
 
 if [ ! -d "$SQL_FOLDER" ]; then
