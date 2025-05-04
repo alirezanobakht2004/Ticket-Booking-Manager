@@ -1,0 +1,1 @@
+mysql -u root -p -D alibaba_db -e "source your_query_file.sql"
