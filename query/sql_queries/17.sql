@@ -1,25 +1,16 @@
-/* 17_top_cancellation_supporter.sql */
 WITH cancels AS (
-    SELECT rep.person_id                    AS support_id,
-           COUNT(*)                         AS cancel_cnt
-    FROM   report rep
-    WHERE  rep.status = 'CANCELLED'
+    SELECT rep.person_id, COUNT(*) AS cnt
+    FROM   report rep FORCE INDEX (idx_ticket)        -- use the new index
+    WHERE  rep.status='CANCELLED'
     GROUP  BY rep.person_id
-),
-tot AS ( SELECT SUM(cancel_cnt) AS total_cancel FROM cancels ),
-leader AS (
-    SELECT support_id, cancel_cnt
-    FROM   cancels
-    ORDER  BY cancel_cnt DESC
-    LIMIT 1
+), totals AS (
+    SELECT SUM(cnt) AS grand_cnt FROM cancels
 )
-SELECT  p.person_id,
-        p.first_name,
-        p.last_name,
-        s.work_position,
-        l.cancel_cnt,
-        ROUND(l.cancel_cnt / tot.total_cancel * 100, 2) AS cancel_pct
-FROM    leader l
-JOIN    tot
-JOIN    person  p ON p.person_id = l.support_id
-JOIN    support s ON s.person_id = l.support_id;
+SELECT  p.first_name, p.last_name,
+        ROUND(c.cnt / totals.grand_cnt * 100,2) AS cancel_pct
+FROM    cancels c
+JOIN    totals
+JOIN    person  p ON p.person_id = c.person_id
+ORDER   BY c.cnt DESC
+LIMIT 1;
+

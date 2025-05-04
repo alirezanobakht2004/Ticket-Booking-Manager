@@ -22,3 +22,22 @@ CREATE TABLE IF NOT EXISTS report (
 ALTER TABLE ticket
   MODIFY departure_time DATETIME          NOT NULL,
   MODIFY arrival_time   DATETIME          NOT NULL;
+
+
+-- ─── Phase‑2 & 3 heavy paths ───────────────────────────────────
+ALTER TABLE ticket
+  ADD INDEX idx_res (reservation_id),                 -- Q6‑14 look‑ups
+  ADD INDEX idx_created (created_at),                 -- Q8, Q15, Q21
+  ADD INDEX idx_dst (destination),                    -- Q4, Q9
+  ADD INDEX idx_src_dst_time (source,destination,departure_time); -- Phase‑3 searches
+
+ALTER TABLE reservation
+  ADD INDEX idx_passenger_status (passenger_id,status);  -- Q17 & deletes
+
+ALTER TABLE payment
+  ADD INDEX idx_res_paytime (reservation_id,payment_time); -- Q3, future monthly sales
+
+ALTER TABLE report
+  ADD INDEX idx_ticket (ticket_id);                     -- Q22
+ALTER TABLE plane
+  ADD INDEX idx_airline (airline_name);                 -- Q21
