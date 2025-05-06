@@ -113,7 +113,7 @@ CREATE TABLE `payment` (
   `status` varchar(50) DEFAULT NULL,
   `transaction_reference` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`payment_id`),
-  KEY `reservation_id` (`reservation_id`),
+  KEY `idx_res_paytime` (`reservation_id`,`payment_time`),
   CONSTRAINT `payment_ibfk_1` FOREIGN KEY (`reservation_id`) REFERENCES `reservation` (`reservation_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7501 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -147,7 +147,8 @@ CREATE TABLE `person` (
   `account_state` tinyint(1) DEFAULT 1,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`person_id`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_email_phone` (`email`,`phone_number`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -180,6 +181,7 @@ CREATE TABLE `plane` (
   `closed_compartment` tinyint(1) DEFAULT NULL,
   `bed_chair` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`vehicle_id`),
+  KEY `idx_airline` (`airline_name`),
   CONSTRAINT `plane_ibfk_1` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicle` (`vehicle_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -215,8 +217,9 @@ CREATE TABLE `report` (
   PRIMARY KEY (`report_id`),
   KEY `person_id` (`person_id`),
   KEY `reservation_id` (`reservation_id`),
-  KEY `ticket_id` (`ticket_id`),
   KEY `payment_id` (`payment_id`),
+  KEY `idx_ticket` (`ticket_id`),
+  KEY `idx_report_topic` (`report_type`,`person_id`),
   CONSTRAINT `report_ibfk_1` FOREIGN KEY (`person_id`) REFERENCES `person` (`person_id`),
   CONSTRAINT `report_ibfk_2` FOREIGN KEY (`reservation_id`) REFERENCES `reservation` (`reservation_id`),
   CONSTRAINT `report_ibfk_3` FOREIGN KEY (`ticket_id`) REFERENCES `ticket` (`ticket_id`),
@@ -250,7 +253,8 @@ CREATE TABLE `reservation` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`reservation_id`),
-  KEY `passenger_id` (`passenger_id`),
+  KEY `idx_passenger_status` (`passenger_id`,`status`),
+  KEY `idx_res_status` (`status`,`passenger_id`),
   CONSTRAINT `reservation_ibfk_1` FOREIGN KEY (`passenger_id`) REFERENCES `passenger` (`person_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=8001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -340,11 +344,13 @@ CREATE TABLE `ticket` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `seat_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`ticket_id`),
-  KEY `reservation_id` (`reservation_id`),
   KEY `vehicle_id` (`vehicle_id`),
-  KEY `source` (`source`),
-  KEY `destination` (`destination`),
   KEY `seat_id` (`seat_id`),
+  KEY `idx_res` (`reservation_id`),
+  KEY `idx_created` (`created_at`),
+  KEY `idx_dst` (`destination`),
+  KEY `idx_src_dst_time` (`source`,`destination`,`departure_time`),
+  KEY `idx_ticket_created` (`created_at`),
   CONSTRAINT `ticket_ibfk_1` FOREIGN KEY (`reservation_id`) REFERENCES `reservation` (`reservation_id`),
   CONSTRAINT `ticket_ibfk_2` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicle` (`vehicle_id`),
   CONSTRAINT `ticket_ibfk_3` FOREIGN KEY (`source`) REFERENCES `location` (`location_id`),
@@ -431,4 +437,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-04 12:10:17
+-- Dump completed on 2025-05-06 10:55:37
