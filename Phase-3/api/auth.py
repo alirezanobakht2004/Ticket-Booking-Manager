@@ -2,15 +2,33 @@ from flask import Blueprint, request, jsonify
 
 auth_bp = Blueprint('auth', __name__)
 
+from flask import Blueprint, request, jsonify
+from services.auth_service import request_otp_service, verify_otp_service
+
+auth_bp = Blueprint('auth', __name__)
+
 @auth_bp.route('/login/request-otp', methods=['POST'])
 def request_otp():
-    # Parse phone/email, generate OTP, save in Redis, return success
-    return jsonify({'status': 'success', 'message': 'OTP sent.'})
+    data = request.json
+    user_key = data.get('phone') or data.get('email')
+    if not user_key:
+        return jsonify({'status': 'error', 'message': 'Phone or email is required.'}), 400
+    otp = request_otp_service(user_key)
+    # For demo, return OTP in response. In production, do not send OTP in JSON!
+    return jsonify({'status': 'success', 'message': 'OTP sent.', 'otp': otp})
 
 @auth_bp.route('/login/verify-otp', methods=['POST'])
 def verify_otp():
-    # Parse phone/email, OTP; check Redis, return JWT if valid
-    return jsonify({'status': 'success', 'token': 'fake_jwt_token'})
+    data = request.json
+    user_key = data.get('phone') or data.get('email')
+    otp_input = data.get('otp')
+    if not user_key or not otp_input:
+        return jsonify({'status': 'error', 'message': 'User key and OTP required.'}), 400
+    ok, result = verify_otp_service(user_key, otp_input)
+    if not ok:
+        return jsonify({'status': 'error', 'message': result}), 401
+    return jsonify({'status': 'success', 'token': result})
+
 
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
