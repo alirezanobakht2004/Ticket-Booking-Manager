@@ -1,3 +1,4 @@
+import logging
 from flask import Flask
 from flask_cors import CORS
 
@@ -6,18 +7,13 @@ def create_app():
     CORS(app)
     app.config.from_object('config.Config')
 
+    # Set up logging for debugging
+    logging.basicConfig(level=logging.DEBUG)
+    app.logger.setLevel(logging.DEBUG)  # Set logging level to DEBUG for verbose output
+
     # Import and register blueprints
     from api.auth import auth_bp
-    from api.user import user_bp
-    from api.ticket import ticket_bp
-    from api.admin import admin_bp
-    from api.cities import cities_bp
-
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(user_bp, url_prefix='/api/user')
-    app.register_blueprint(ticket_bp, url_prefix='/api/ticket')
-    app.register_blueprint(admin_bp, url_prefix='/api/admin')
-    app.register_blueprint(cities_bp, url_prefix='/api/cities')
 
     return app
 
