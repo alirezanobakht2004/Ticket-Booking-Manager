@@ -48,7 +48,7 @@ http://localhost:5000/api/auth/profile/update
 {
   "first_name": "Asoi",
   "last_name": "Rei",
-  "email": "ali.reza@example.com",
+  "email": "kkkkali.reza@example.com",
   "phone_number": "0913456789",
   "city": "Tehran"
 }
@@ -83,19 +83,25 @@ http://localhost:5000/api/tickets/details/<ticket_id>
 
 7)
 
+Content-Type: application/json
 
+Authorization: Bearer <your_jwt_token>
 
 Reserve ticket:
-POST http://localhost:5000/api/reserve
-Headers: Authorization: Bearer <token>
-Body (JSON): { "ticket_id": 123, "validity_minutes": 10 }
+POST http://localhost:5000/api/reservations/reserve
+
+{
+"ticket_id": 123,
+"quantity": 2,
+"reservation_time": 10 // optional, duration in minutes
+}
 
 Get active reservations:
 GET http://localhost:5000/api/reservations/active
-Headers: Authorization: Bearer <token>
+
 
 Get reservation history:
 GET http://localhost:5000/api/reservations/history
-Headers: Authorization: Bearer <token>
+
 
 8)

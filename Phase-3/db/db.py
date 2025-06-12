@@ -279,3 +279,15 @@ def get_reservations(passenger_id, active_only=True):
             return cursor.fetchall()
     finally:
         conn.close()
+
+
+def find_user_by_email(email):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM person WHERE email = %s"
+            cursor.execute(sql, (email,))
+            user = cursor.fetchone()
+            return user  # Returns None if not found, or dict-like user record
+    finally:
+        conn.close()

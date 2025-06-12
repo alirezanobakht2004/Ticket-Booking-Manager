@@ -5,7 +5,7 @@ from db.db import find_user_by_phone_or_email
 from db.db import user_exists, create_user, create_passenger
 from utils.password_utils import hash_password
 from utils.jwt_utils import create_jwt
-from db.db import update_user_profile, find_user_by_id
+from db.db import update_user_profile, find_user_by_id, find_user_by_email
 from services.cache_service import update_user_cache
 from utils.password_utils import check_password
 from utils.email_utils import send_otp_email  # import the email sending utility
@@ -62,14 +62,18 @@ def signup_service(first_name, last_name, email, phone_number, city, password):
 
 
 def update_user_profile_service(user_id, first_name, last_name, phone_number, email, city):
-    user = find_user_by_id(user_id)
-    if not user:
-        return False, "User not found"
+    # Check if email is used by another user
+    existing_user = find_user_by_email(email)
+    if existing_user and existing_user['person_id'] != user_id:
+        return False, "Email already in use by another account."
 
+    # Proceed with update
     success, result = update_user_profile(user_id, first_name, last_name, phone_number, email, city)
     if not success:
         return False, result
 
+    # Update cache or other post-update logic
     update_user_cache(user_id, first_name, last_name, phone_number, email, city)
 
     return True, "Profile updated successfully."
+
