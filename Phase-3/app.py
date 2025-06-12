@@ -14,6 +14,10 @@ def create_app():
     # Import and register blueprints
     from api.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    
+    from api.cities import cities_bp
+    app.register_blueprint(cities_bp, url_prefix='/api')
+
 
     return app
 

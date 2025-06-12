@@ -88,3 +88,12 @@ def find_user_by_id(user_id):
             return cursor.fetchone()  # This returns the user data or None if not found
     finally:
         conn.close()
+        
+def get_all_cities():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT location_id, title FROM location ORDER BY title ASC")
+            return cursor.fetchall()  # Returns list of dicts with keys: location_id, title
+    finally:
+        conn.close()

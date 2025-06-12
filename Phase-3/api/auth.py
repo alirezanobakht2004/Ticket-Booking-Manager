@@ -3,7 +3,6 @@ from services.auth_service import request_otp_service, verify_otp_service, signu
 from flask import Blueprint, request, jsonify, current_app
 from services.auth_service import update_user_profile_service
 from utils.jwt_utils import verify_jwt_token
-from services.auth_service import get_cities_service
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -123,12 +122,3 @@ def update_profile():
 
 
 
-def get_cities():
-    # Log the incoming request
-    current_app.logger.debug("Received request for cities list.")
-    
-    cities = get_cities_service()
-    if not cities:
-        return jsonify({'status': 'error', 'message': 'No cities found.'}), 404
-
-    return jsonify({'status': 'success', 'cities': cities}), 200
