@@ -13,19 +13,18 @@ def request_otp():
     email = data.get('email')
     user_key = phone or email
 
-    # Log the incoming request details
     current_app.logger.debug(f"Received request for OTP: phone={phone}, email={email}")
 
     if not user_key:
         current_app.logger.warning("User key (phone or email) is missing.")
         return jsonify({'status': 'error', 'message': 'Phone or email is required.'}), 400
 
-    otp = request_otp_service(user_key)
-    
-    # Log the generated OTP (for debugging; do not log in production)
+    otp = request_otp_service(user_key, email=email) 
+
     current_app.logger.debug(f"Generated OTP for user {user_key}: {otp}")
 
     return jsonify({'status': 'success', 'message': 'OTP sent.', 'otp': otp})
+
 
 @auth_bp.route('/login/verify-otp', methods=['POST'])
 def verify_otp():
@@ -89,6 +88,7 @@ def signup():
 @auth_bp.route('/profile/update', methods=['POST'])
 def update_profile():
     data = request.get_json()
+    current_app.logger.debug(f"Update profile data received: {data}")
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'status': 'error', 'message': 'Authorization token is required.'}), 400

@@ -21,13 +21,21 @@ def delete_otp(user_key):
 def update_user_cache(user_id, first_name, last_name, phone_number, email, city):
     user_key = f"user:{user_id}"
     user_data = {
-        'first_name': first_name,
-        'last_name': last_name,
-        'phone_number': phone_number,
-        'email': email,
-        'city': city
+        "first_name": first_name,
+        "last_name": last_name,
+        "phone_number": phone_number,
+        "email": email,
+        "city": city
     }
-    redis_client.set(user_key, user_data)
+    user_data_json = json.dumps(user_data)  # Serialize dict to JSON string
+    redis_client.set(user_key, user_data_json)
+
+def get_user_cache(user_id):
+    user_key = f"user:{user_id}"
+    user_data_json = redis_client.get(user_key)
+    if user_data_json:
+        return json.loads(user_data_json)  # Deserialize JSON string to dict
+    return None
     
 TICKET_SEARCH_TTL = 300  # 5 minutes cache
 

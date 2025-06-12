@@ -18,3 +18,9 @@ class Config:
     REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
     REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
     REDIS_DB = int(os.environ.get('REDIS_DB', 0))
+    
+    # Email
+    EMAIL_SENDER = os.environ.get('EMAIL_SENDER', 'your_email@example.com')
+    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'your_email_password')
+    SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 465))

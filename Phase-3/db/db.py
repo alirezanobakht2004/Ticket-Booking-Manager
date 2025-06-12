@@ -1,5 +1,6 @@
 import pymysql
 from config import Config
+import logging
 
 def get_db_connection():
     return pymysql.connect(
@@ -72,12 +73,16 @@ def update_user_profile(user_id, first_name, last_name, phone_number, email, cit
             WHERE person_id=%s
             """
             cursor.execute(sql, (first_name, last_name, phone_number, email, city, user_id))
+            # If no rows affected, check if user exists
             if cursor.rowcount == 0:
-                return False, "User not found"
+                # Double-check user existence to distinguish no change vs no user
+                cursor.execute("SELECT 1 FROM person WHERE person_id=%s", (user_id,))
+                if cursor.fetchone() is None:
+                    return False, "User not found"
             return True, "User profile updated"
     finally:
         conn.close()
-        
+
         
         
 def find_user_by_id(user_id):
@@ -85,9 +90,15 @@ def find_user_by_id(user_id):
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM person WHERE person_id = %s", (user_id,))
-            return cursor.fetchone()  # This returns the user data or None if not found
+            user = cursor.fetchone()
+            if user:
+                logging.debug(f"User found in DB: {user}")
+            else:
+                logging.debug(f"No user found with person_id={user_id}")
+            return user
     finally:
         conn.close()
+
         
 def get_all_cities():
     conn = get_db_connection()

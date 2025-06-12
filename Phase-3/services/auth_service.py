@@ -8,10 +8,16 @@ from utils.jwt_utils import create_jwt
 from db.db import update_user_profile, find_user_by_id
 from services.cache_service import update_user_cache
 from utils.password_utils import check_password
+from utils.email_utils import send_otp_email  # import the email sending utility
 
-def request_otp_service(user_key):
+def request_otp_service(user_key, email=None):
     otp = generate_otp()
     store_otp(user_key, otp)
+    if email:
+        success = send_otp_email(email, otp)
+        if not success:
+            # Optionally handle email sending failure (log or raise)
+            print(f"Failed to send OTP email to {email}")
     return otp
 
 def verify_otp_service(user_key, otp_input, phone=None, email=None):
@@ -56,17 +62,14 @@ def signup_service(first_name, last_name, email, phone_number, city, password):
 
 
 def update_user_profile_service(user_id, first_name, last_name, phone_number, email, city):
-    # Check if user exists
     user = find_user_by_id(user_id)
     if not user:
         return False, "User not found"
 
-    # Update user profile in the database
     success, result = update_user_profile(user_id, first_name, last_name, phone_number, email, city)
     if not success:
         return False, result
 
-    # Update user profile in Redis (cache invalidation and update)
     update_user_cache(user_id, first_name, last_name, phone_number, email, city)
 
     return True, "Profile updated successfully."
