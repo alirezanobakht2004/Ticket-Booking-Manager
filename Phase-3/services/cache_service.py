@@ -1,7 +1,7 @@
 import json
 from db.redis_client import redis_client
 
-OTP_TTL_SECONDS = 120  # 2 minutes, adjust as needed
+OTP_TTL_SECONDS = 1200  # 2 minutes, adjust as needed
 
 def store_otp(user_key, otp_code, ttl=OTP_TTL_SECONDS):
     """Store OTP code in Redis with a TTL."""

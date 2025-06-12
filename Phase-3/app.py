@@ -16,13 +16,13 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
     from api.cities import cities_bp
-    app.register_blueprint(cities_bp, url_prefix='/api')
+    app.register_blueprint(cities_bp, url_prefix='/api/cities')
 
     from api.ticket import ticket_bp
-    app.register_blueprint(ticket_bp, url_prefix='/api')
+    app.register_blueprint(ticket_bp, url_prefix='/api/tickets')
 
     from api.reservation import reservation_bp
-    app.register_blueprint(reservation_bp, url_prefix='/api')
+    app.register_blueprint(reservation_bp, url_prefix='/api/reservations')
 
 
     return app

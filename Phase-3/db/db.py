@@ -229,6 +229,9 @@ def get_ticket_details(ticket_id):
 
 from datetime import datetime, timedelta
 
+import logging
+from datetime import datetime, timedelta
+
 def create_reservation(passenger_id, ticket_id, validity_minutes=10):
     conn = get_db_connection()
     try:
@@ -239,33 +242,40 @@ def create_reservation(passenger_id, ticket_id, validity_minutes=10):
             VALUES (%s, %s, %s, %s, %s, %s)
             """
             now = datetime.utcnow()
+            logging.debug(f"Executing SQL: {sql} with passenger_id={passenger_id}, expiry_time={expiry_time}")
             cursor.execute(sql, (passenger_id, now, 'active', expiry_time, now, now))
             reservation_id = cursor.lastrowid
+            logging.debug(f"Inserted reservation with ID: {reservation_id}")
 
-            # Optionally link reservation to ticket by updating ticket or creating a mapping table
-            # For now, assume ticket_id is stored elsewhere or handled separately
+            # TODO: Link reservation to ticket_id if needed
 
             return reservation_id
+    except Exception as e:
+        logging.error(f"Error creating reservation: {e}")
+        raise
     finally:
         conn.close()
+
 
 def get_reservations(passenger_id, active_only=True):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             if active_only:
+                now = datetime.utcnow()
                 sql = """
                 SELECT * FROM reservation
-                WHERE passenger_id = %s AND status = 'active' AND expiry_time > NOW()
+                WHERE passenger_id = %s AND status = 'active' AND expiry_time > %s
                 ORDER BY reservation_date DESC
                 """
+                cursor.execute(sql, (passenger_id, now))
             else:
                 sql = """
                 SELECT * FROM reservation
                 WHERE passenger_id = %s
                 ORDER BY reservation_date DESC
                 """
-            cursor.execute(sql, (passenger_id,))
+                cursor.execute(sql, (passenger_id,))
             return cursor.fetchall()
     finally:
         conn.close()

@@ -9,6 +9,16 @@ def generate_cache_key(params: dict) -> str:
     key_str = json.dumps(params, sort_keys=True)
     return "search_tickets:" + hashlib.md5(key_str.encode()).hexdigest()
 
+import datetime
+
+def serialize_datetimes(obj):
+    if isinstance(obj, list):
+        return [serialize_datetimes(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {k: (v.isoformat() if isinstance(v, datetime.datetime) else serialize_datetimes(v)) for k, v in obj.items()}
+    else:
+        return obj
+
 def search_tickets_service(
     origin_id,
     destination_id,
@@ -52,9 +62,12 @@ def search_tickets_service(
         travel_class=travel_class
     )
 
+    # Serialize datetime objects before caching
+    results_serializable = serialize_datetimes(results)
 
-    cache_search(cache_key, results)
-    return results
+    cache_search(cache_key, results_serializable)
+    return results_serializable
+
 
 
 def get_ticket_details_service(ticket_id):

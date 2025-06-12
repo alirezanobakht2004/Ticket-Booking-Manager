@@ -3,7 +3,7 @@ from services.ticket_service import search_tickets_service
 
 ticket_bp = Blueprint('ticket', __name__)
 
-@ticket_bp.route('/tickets/search', methods=['GET'])
+@ticket_bp.route('/search', methods=['GET'])
 def search_tickets():
     args = request.args
 
@@ -33,9 +33,7 @@ def search_tickets():
 from flask import Blueprint, jsonify, abort
 from services.ticket_service import get_ticket_details_service
 
-ticket_bp = Blueprint('ticket', __name__)
-
-@ticket_bp.route('/tickets/details/<int:ticket_id>', methods=['GET'])
+@ticket_bp.route('/details/<int:ticket_id>', methods=['GET'])
 def get_ticket_details(ticket_id):
     ticket = get_ticket_details_service(ticket_id)
     if not ticket:
