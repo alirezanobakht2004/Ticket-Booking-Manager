@@ -18,10 +18,11 @@ def create_app():
     from api.cities import cities_bp
     app.register_blueprint(cities_bp, url_prefix='/api')
 
-
     from api.ticket import ticket_bp
     app.register_blueprint(ticket_bp, url_prefix='/api')
 
+    from api.reservation import reservation_bp
+    app.register_blueprint(reservation_bp, url_prefix='/api')
 
 
     return app
