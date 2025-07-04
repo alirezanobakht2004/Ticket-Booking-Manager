@@ -1,6 +1,9 @@
 import pymysql
 from config import Config
 import logging
+from flask import g
+from datetime import datetime
+import uuid
 
 def get_db_connection():
     return pymysql.connect(
@@ -83,8 +86,6 @@ def update_user_profile(user_id, first_name, last_name, phone_number, email, cit
     finally:
         conn.close()
 
-        
-        
 def find_user_by_id(user_id):
     conn = get_db_connection()
     try:
@@ -99,7 +100,6 @@ def find_user_by_id(user_id):
     finally:
         conn.close()
 
-        
 def get_all_cities():
     conn = get_db_connection()
     try:
@@ -108,8 +108,7 @@ def get_all_cities():
             return cursor.fetchall()  # Returns list of dicts with keys: location_id, title
     finally:
         conn.close()
-        
-        
+
 def search_tickets(origin_id, destination_id, travel_date, vehicle_type=None,
                    min_price=None, max_price=None,
                    departure_start=None, departure_end=None,
@@ -289,5 +288,442 @@ def find_user_by_email(email):
             cursor.execute(sql, (email,))
             user = cursor.fetchone()
             return user  # Returns None if not found, or dict-like user record
+    finally:
+        conn.close()
+
+
+
+############ The new functions start here ############
+
+def find_reservation_by_ticket_id(ticket_id):
+    """Finds reservation details associated with a given ticket_id."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Join ticket and reservation tables to get reservation info from a ticket
+            sql = """
+            SELECT r.*
+            FROM reservation r
+            JOIN ticket t ON r.reservation_id = t.reservation_id
+            WHERE t.ticket_id = %s
+            """
+            cursor.execute(sql, (ticket_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
+
+def get_total_amount_for_reservation(reservation_id):
+    """Calculates the sum of all ticket prices for a reservation."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = "SELECT SUM(price) as total_amount FROM ticket WHERE reservation_id = %s"
+            cursor.execute(sql, (reservation_id,))
+            result = cursor.fetchone()
+            return result['total_amount'] if result else 0
+    finally:
+        conn.close()
+
+def create_payment_record(reservation_id, amount, method, status, transaction_ref):
+    """Creates a new record in the payment table."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            INSERT INTO payment (reservation_id, amount, payment_method, status, transaction_reference)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (reservation_id, amount, method, status, transaction_ref))
+            return cursor.lastrowid
+    finally:
+        conn.close()
+
+def update_reservation_status(reservation_id, new_status):
+    """Updates the status of a specific reservation."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # We also update `updated_at` manually for clarity, though the DB might do it.
+            sql = "UPDATE reservation SET status = %s, updated_at = %s WHERE reservation_id = %s"
+            cursor.execute(sql, (new_status, datetime.now(), reservation_id))
+            return cursor.rowcount > 0 # Returns True if a row was updated
+    finally:
+        conn.close()
+
+def get_finalized_ticket_details(reservation_id):
+    """Retrieves all ticket details for a confirmed reservation."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = "SELECT ticket_id, vehicle_id, price, departure_time, arrival_time FROM ticket WHERE reservation_id = %s"
+            cursor.execute(sql, (reservation_id,))
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+def get_ticket_for_cancellation_check(ticket_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            SELECT
+                t.ticket_id,
+                t.price,
+                t.departure_time,
+                r.status AS reservation_status,
+                CASE
+                    WHEN b.vehicle_id IS NOT NULL THEN 'bus'
+                    WHEN p.vehicle_id IS NOT NULL THEN 'plane'
+                    WHEN tr.vehicle_id IS NOT NULL THEN 'train'
+                    ELSE 'unknown'
+                END AS vehicle_type
+            FROM ticket t
+            JOIN reservation r ON t.reservation_id = r.reservation_id
+            JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+            LEFT JOIN bus b ON v.vehicle_id = b.vehicle_id
+            LEFT JOIN plane p ON v.vehicle_id = p.vehicle_id
+            LEFT JOIN train tr ON v.vehicle_id = tr.vehicle_id
+            WHERE t.ticket_id = %s
+            """
+            cursor.execute(sql, (ticket_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
+
+###############################
+
+def get_reservations_by_status(status):
+    """Fetches all reservations with a specific status, including passenger info."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            SELECT
+                r.reservation_id,
+                r.status,
+                r.reservation_date,
+                r.expiry_time,
+                p.person_id,
+                p.first_name,
+                p.last_name
+            FROM reservation r
+            JOIN passenger ps ON r.passenger_id = ps.person_id
+            JOIN person p ON ps.person_id = p.person_id
+            WHERE r.status = %s
+            ORDER BY r.updated_at DESC
+            """
+            cursor.execute(sql, (status,))
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+# --- FIX IS IN THIS FUNCTION ---
+def get_all_reports():
+    """
+    Fetches all user reports from the database using the correct column names.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # This query has been updated to match your 'report' table schema.
+            sql = """
+            SELECT
+                rep.report_id,
+                rep.report_type,
+                rep.report_text,
+                rep.status AS report_status,
+                rep.created_at,
+                rep.ticket_id,
+                p.person_id AS reporter_id,
+                p.first_name,
+                p.last_name
+            FROM report rep
+            JOIN person p ON rep.person_id = p.person_id
+            ORDER BY rep.created_at DESC
+            """
+            cursor.execute(sql)
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+def get_reservation_by_id(reservation_id):
+    """Fetches a single reservation by its ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM reservation WHERE reservation_id = %s", (reservation_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
+
+############################################
+def get_passenger_id_from_person_id(person_id):
+    """
+    Finds the passenger record for a given person_id and returns the person_id
+    to be used as the identifier in the reservation table.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # FIX: Select the 'person_id' column, not 'passenger_id'.
+            # This query confirms a passenger record exists for the person.
+            sql = "SELECT person_id FROM passenger WHERE person_id = %s"
+            cursor.execute(sql, (person_id,))
+            result = cursor.fetchone()
+            
+            # If a result is found, return the person_id. This is what's used in the reservation table.
+            return result['person_id'] if result else None
+    finally:
+        conn.close()
+
+
+
+def get_user_tickets_by_filter(passenger_id, filter_type):
+    """
+    Fetches a user's tickets based on a filter.
+    Filters: 'upcoming', 'past', 'cancelled'
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Base query joins ticket with reservation and vehicle details
+            sql = """
+            SELECT
+                t.ticket_id,
+                t.departure_time,
+                t.arrival_time,
+                t.price,
+                r.status AS reservation_status,
+                v.brand,
+                orig.title AS origin_city,
+                dest.title AS destination_city
+            FROM ticket t
+            JOIN reservation r ON t.reservation_id = r.reservation_id
+            JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+            JOIN location orig ON t.source = orig.location_id
+            JOIN location dest ON t.destination = dest.location_id
+            WHERE r.passenger_id = %s
+            """
+            
+            params = [passenger_id]
+            now_utc = datetime.utcnow()
+
+            # Apply filter logic
+            if filter_type == 'upcoming':
+                sql += " AND r.status = 'CONFIRMED' AND t.departure_time > %s"
+                params.append(now_utc)
+            elif filter_type == 'past':
+                sql += " AND r.status = 'CONFIRMED' AND t.departure_time <= %s"
+                params.append(now_utc)
+            elif filter_type == 'cancelled':
+                sql += " AND r.status = 'CANCELLED'"
+            else: # Default to upcoming if filter is invalid or not provided
+                sql += " AND r.status = 'CONFIRMED' AND t.departure_time > %s"
+                params.append(now_utc)
+
+            sql += " ORDER BY t.departure_time DESC"
+            
+            cursor.execute(sql, params)
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+#############################################33
+
+def get_ticket_owner_person_id(ticket_id):
+    """Finds the person_id of the user who owns the reservation for a given ticket."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            SELECT p.person_id
+            FROM person p
+            JOIN passenger ps ON p.person_id = ps.person_id
+            JOIN reservation r ON ps.person_id = r.passenger_id
+            JOIN ticket t ON r.reservation_id = t.reservation_id
+            WHERE t.ticket_id = %s
+            """
+            cursor.execute(sql, (ticket_id,))
+            result = cursor.fetchone()
+            return result['person_id'] if result else None
+    finally:
+        conn.close()
+
+
+def add_to_user_wallet(person_id, amount_to_add):
+    """
+    Adds a specified amount to the user's wallet balance.
+    Assumes a 'wallet_balance' column exists in the 'person' table.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # This query safely increments the wallet balance.
+            sql = """
+            UPDATE person
+            SET wallet_balance = wallet_balance + %s
+            WHERE person_id = %s
+            """
+            cursor.execute(sql, (amount_to_add, person_id))
+            return cursor.rowcount > 0 # Returns True if a row was updated
+    finally:
+        conn.close()
+
+##########################################
+def get_ticket_owner_person_id(ticket_id):
+    """Finds the person_id of the user who owns the reservation for a given ticket."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            SELECT p.person_id
+            FROM person p
+            JOIN passenger ps ON p.person_id = ps.person_id
+            JOIN reservation r ON ps.person_id = r.passenger_id
+            JOIN ticket t ON r.reservation_id = t.reservation_id
+            WHERE t.ticket_id = %s
+            """
+            cursor.execute(sql, (ticket_id,))
+            result = cursor.fetchone()
+            return result['person_id'] if result else None
+    finally:
+        conn.close()
+
+
+def add_to_user_wallet(person_id, amount_to_add):
+    """
+    Adds a specified amount to the user's wallet balance.
+    Assumes a 'wallet_balance' column exists in the 'person' table.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # This query safely increments the wallet balance.
+            sql = """
+            UPDATE person
+            SET wallet_balance = wallet_balance + %s
+            WHERE person_id = %s
+            """
+            cursor.execute(sql, (amount_to_add, person_id))
+            return cursor.rowcount > 0 # Returns True if a row was updated
+    finally:
+        conn.close()
+
+def get_reservation_by_ticket_id(ticket_id):
+    """Finds the entire reservation record associated with a given ticket_id."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Join ticket and reservation tables to get reservation info from a ticket
+            sql = """
+            SELECT r.*
+            FROM reservation r
+            JOIN ticket t ON r.reservation_id = t.reservation_id
+            WHERE t.ticket_id = %s
+            """
+            cursor.execute(sql, (ticket_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
+
+#########################################33
+def create_report(person_id, ticket_id, report_type, report_text):
+    """
+    Creates a new report in the database submitted by a user.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # We assume the report table has these columns.
+            # The status defaults to 'OPEN' or a similar initial state.
+            sql = """
+            INSERT INTO report (person_id, ticket_id, report_type, report_text, status)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            # The initial status for a new report is 'OPEN'
+            cursor.execute(sql, (person_id, ticket_id, report_type, report_text, 'OPEN'))
+            return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+##########################################33
+
+def get_payments_by_status(status):
+    """Fetches all payments with a specific status, including user and reservation info."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+            SELECT
+                pay.payment_id,
+                pay.payment_method,
+                pay.amount,
+                pay.status,
+                pay.payment_time,
+                r.reservation_id,
+                p.person_id,
+                p.first_name,
+                p.last_name
+            FROM payment pay
+            JOIN reservation r ON pay.reservation_id = r.reservation_id
+            JOIN passenger ps ON r.passenger_id = ps.person_id
+            JOIN person p ON ps.person_id = p.person_id
+            WHERE pay.status = %s
+            ORDER BY pay.payment_time DESC
+            """
+            cursor.execute(sql, (status,))
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def get_full_reservation_details(reservation_id):
+    """
+    Fetches detailed information for a single reservation, including all its tickets.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # First, get reservation and passenger details
+            reservation_sql = """
+            SELECT
+                r.*,
+                p.first_name,
+                p.last_name,
+                p.email,
+                p.phone_number
+            FROM reservation r
+            JOIN passenger ps ON r.passenger_id = ps.person_id
+            JOIN person p ON ps.person_id = p.person_id
+            WHERE r.reservation_id = %s
+            """
+            cursor.execute(reservation_sql, (reservation_id,))
+            reservation_details = cursor.fetchone()
+
+            if not reservation_details:
+                return None
+
+            # Second, get all tickets associated with this reservation
+            tickets_sql = """
+            SELECT
+                t.ticket_id,
+                t.price,
+                t.departure_time,
+                t.arrival_time,
+                orig.title as origin_city,
+                dest.title as destination_city
+            FROM ticket t
+            JOIN location orig ON t.source = orig.location_id
+            JOIN location dest ON t.destination = dest.location_id
+            WHERE t.reservation_id = %s
+            """
+            cursor.execute(tickets_sql, (reservation_id,))
+            tickets = cursor.fetchall()
+            
+            reservation_details['tickets'] = tickets
+            return reservation_details
     finally:
         conn.close()

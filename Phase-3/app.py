@@ -23,10 +23,21 @@ def create_app():
 
     from api.reservation import reservation_bp
     app.register_blueprint(reservation_bp, url_prefix='/api/reservations')
+    
+    from api.payment import payment_bp
+    app.register_blueprint(payment_bp, url_prefix='/api/payments')
 
+    from api.admin import admin_bp
+    app.register_blueprint(admin_bp,url_prefix = '/api/admin')
+
+    from api.user import user_bp
+    app.register_blueprint(user_bp, url_prefix='/api/user')
+
+    from api.report import report_bp
+    app.register_blueprint(report_bp, url_prefix='/api/report')
 
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(host='0.0.0.0',debug=True)

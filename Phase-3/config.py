@@ -10,8 +10,8 @@ class Config:
     # MySQL/MariaDB
     DB_HOST = os.environ.get('DB_HOST', 'localhost')
     DB_PORT = int(os.environ.get('DB_PORT', 3306))
-    DB_USER = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+    DB_USER = os.environ.get('DB_USER', 'adminer')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'adminer')
     DB_NAME = os.environ.get('DB_NAME', 'alibaba_db')
     
     # Redis

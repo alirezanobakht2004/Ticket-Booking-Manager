@@ -1,0 +1,80 @@
+# services/payment.py
+
+# --- CHANGE 1: Modified import style ---
+# Instead of importing each function by name, we import the whole module.
+# This is a more robust way to avoid import cache issues.
+from db.db import find_active_reservation_for_ticket_db,get_tickets_for_reservation_db,update_reservation_status_db,create_payment_db
+
+from datetime import datetime
+import logging
+
+def _find_and_validate_reservation(ticket_id):
+    """
+    Internal helper to find an active reservation for a ticket,
+    verify ownership, and check its validity (status, expiry).
+    """
+    # We now call the function using `db.`
+    reservation = find_active_reservation_for_ticket_db(ticket_id)
+    # Validate the reservation exists and belongs to the user
+    if not reservation:
+        raise ValueError("No active reservation found for this ticket.")
+    
+    #if reservation['passenger_id'] != passenger_id:
+    #    raise ValueError("This reservation does not belong to the current user.")
+    
+    # Validate the reservation's status and expiry time
+    print(reservation['status'])
+    if reservation['status'] != 'PENDING': # Using the status from your schema
+        raise ValueError(f"Reservation is not active. Current status: {reservation['status']}.")
+        
+    if reservation['expiry_time'] < datetime.utcnow():
+        # Automatically expire the reservation if the current time is past its expiry
+        db.update_reservation_status_db(reservation['reservation_id'], 'EXPIRED')
+        raise ValueError("Reservation has expired.")
+        
+    return reservation
+
+def _execute_payment_and_finalize(reservation, payment_method):
+    """
+    Internal helper to process the payment and update all necessary
+    database records in a transactional manner.
+    """
+    reservation_id = reservation['reservation_id']
+    
+    # Step 1: Simulate payment gateway interaction
+    logging.info(f"Processing payment for reservation {reservation_id} via {payment_method}...")
+    is_payment_successful = True
+    if not is_payment_successful:
+        raise Exception("Payment gateway declined the transaction.")
+
+    # Step 2: Update reservation status to 'CONFIRMED'
+    update_reservation_status_db(reservation_id, 'CONFIRMED')
+    
+    # Step 3: Get all tickets associated with the reservation
+    tickets = db.get_tickets_for_reservation_db(reservation_id)
+    if not tickets:
+        raise Exception(f"Internal error: Could not find tickets for confirmed reservation {reservation_id}.")
+
+    # --- CHANGE 2: Removed non-existent function call ---
+    # The increment_vehicle_reserved_count function was removed as it's not in your db.py
+    
+    # Step 4: Create a payment record
+    total_amount = sum(ticket.get('price', 0) for ticket in tickets)
+    db.create_payment_db(reservation_id, payment_method, total_amount, 'PAID')
+
+    logging.info(f"Reservation {reservation_id} confirmed successfully.")
+    
+    return tickets
+
+def process_payment_for_ticket_service(ticket_id, payment_method):
+    """
+    Main service function to handle the entire payment process.
+    """
+    # First, find and validate the underlying reservation
+    reservation = _find_and_validate_reservation(ticket_id)
+    print(reservation)
+    # If valid, execute the payment and finalize the tickets
+    #finalized_tickets = _execute_payment_and_finalize(reservation, payment_method)
+    return
+    #return finalized_tickets
+
