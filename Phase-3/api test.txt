@@ -88,7 +88,9 @@ Content-Type: application/json
 Authorization: Bearer <your_jwt_token>
 
 Reserve ticket:
-POST http://localhost:5000/api/reservations/reserve
+POST 
+
+http://localhost:5000/api/reservations/reserve
 
 {
 "ticket_id": 123,
