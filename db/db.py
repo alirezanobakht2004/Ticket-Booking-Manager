@@ -235,23 +235,15 @@ def create_reservation(passenger_id, ticket_id, validity_minutes=10):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            expiry_time = datetime.utcnow() + timedelta(minutes=validity_minutes)
-            sql = """
-            INSERT INTO reservation (passenger_id, reservation_date, status, expiry_time, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """
             now = datetime.utcnow()
-            logging.debug(f"Executing SQL: {sql} with passenger_id={passenger_id}, expiry_time={expiry_time}")
-            cursor.execute(sql, (passenger_id, now, 'active', expiry_time, now, now))
+            expiry_time = now + timedelta(minutes=validity_minutes)
+            cursor.execute("""
+                INSERT INTO reservation (passenger_id, reservation_date, status, expiry_time, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (passenger_id, now, 'PENDING', expiry_time, now, now))
             reservation_id = cursor.lastrowid
-            logging.debug(f"Inserted reservation with ID: {reservation_id}")
-
-            # TODO: Link reservation to ticket_id if needed
-
+            cursor.execute("UPDATE ticket SET reservation_id=%s WHERE ticket_id=%s", (reservation_id, ticket_id))
             return reservation_id
-    except Exception as e:
-        logging.error(f"Error creating reservation: {e}")
-        raise
     finally:
         conn.close()
 
@@ -262,22 +254,21 @@ def get_reservations(passenger_id, active_only=True):
         with conn.cursor() as cursor:
             if active_only:
                 now = datetime.utcnow()
-                sql = """
-                SELECT * FROM reservation
-                WHERE passenger_id = %s AND status = 'active' AND expiry_time > %s
-                ORDER BY reservation_date DESC
-                """
-                cursor.execute(sql, (passenger_id, now))
+                cursor.execute("""
+                    SELECT * FROM reservation
+                    WHERE passenger_id=%s AND status='PENDING' AND expiry_time>%s
+                    ORDER BY reservation_date DESC
+                """, (passenger_id, now))
             else:
-                sql = """
-                SELECT * FROM reservation
-                WHERE passenger_id = %s
-                ORDER BY reservation_date DESC
-                """
-                cursor.execute(sql, (passenger_id,))
+                cursor.execute("""
+                    SELECT * FROM reservation
+                    WHERE passenger_id=%s
+                    ORDER BY reservation_date DESC
+                """, (passenger_id,))
             return cursor.fetchall()
     finally:
         conn.close()
+
 
 
 def find_user_by_email(email):
