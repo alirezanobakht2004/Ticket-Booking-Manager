@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 (Views) theme -->
+    <style name="Theme.TicketBookingManagerClient" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize if you want -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+    </style>
+</resources>
