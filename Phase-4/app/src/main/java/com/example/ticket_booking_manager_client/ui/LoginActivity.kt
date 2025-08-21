@@ -29,6 +29,16 @@ class LoginActivity : AppCompatActivity() {
         val otpInput = findViewById<EditText>(R.id.otpInput)
         val verifyOtp = findViewById<Button>(R.id.verifyOtp)
 
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack).apply {
+            title = getString(R.string.login)
+            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        }
+
+        val goToRegister = findViewById<com.google.android.material.button.MaterialButton>(R.id.goToRegister)
+        goToRegister.setOnClickListener {
+            startActivity(android.content.Intent(this, RegisterActivity::class.java))
+        }
+
         requestOtp.setOnClickListener {
             val input = phoneOrEmail.text.toString().trim()
             requestOtp.isEnabled = false

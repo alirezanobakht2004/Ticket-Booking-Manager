@@ -28,7 +28,7 @@
                 android:layout_gravity="center_horizontal"/>
 
             <TextView
-                android:text="@string/login_title"
+                android:text="@string/register_title"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textStyle="bold"
                 android:layout_width="wrap_content"
@@ -37,49 +37,60 @@
                 android:layout_marginTop="8dp"/>
 
             <EditText
+                android:id="@+id/firstName"
+                android:hint="@string/first_name"
+                android:inputType="textPersonName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+
+            <EditText
+                android:id="@+id/lastName"
+                android:hint="@string/last_name"
+                android:inputType="textPersonName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"/>
+
+            <EditText
                 android:id="@+id/phoneOrEmail"
                 android:hint="@string/phone_or_email"
                 android:inputType="textEmailAddress|phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"/>
-
-            <TextView
-                android:text="@string/login_helper"
-                android:alpha="0.8"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/requestOtp"
-                android:text="@string/request_otp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"/>
+                android:layout_marginTop="8dp"/>
 
             <EditText
-                android:id="@+id/otpInput"
-                android:hint="@string/enter_otp"
-                android:inputType="number"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/verifyOtp"
-                android:text="@string/verify_and_continue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/goToRegister"
-                style="?attr/materialButtonOutlinedStyle"
-                android:text="@string/register"
+                android:id="@+id/password"
+                android:hint="@string/password"
+                android:inputType="textPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"/>
+
+            <Spinner
+                android:id="@+id/citySpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/signUpBtn"
+                android:text="@string/register"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/signupLoading"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:lottie_rawRes="@raw/loading_spinner"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true"
+                android:visibility="gone"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="12dp"/>
         </LinearLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

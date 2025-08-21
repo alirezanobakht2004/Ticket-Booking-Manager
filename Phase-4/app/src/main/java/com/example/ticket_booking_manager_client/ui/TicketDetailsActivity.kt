@@ -30,6 +30,11 @@ class TicketDetailsActivity : AppCompatActivity() {
         repo = Repository(this)
         ticketId = intent.getIntExtra("ticket_id", -1)
 
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack)?.apply {
+            title = getString(R.string.ticket_details)
+            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        }
+
         loadDetails()
 
         reserveBtn.setOnClickListener { doReserve() }

@@ -44,6 +44,11 @@ class SearchActivity : AppCompatActivity() {
         resultsRV.layoutManager = LinearLayoutManager(this)
         resultsRV.adapter = adapter
 
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack).apply {
+            title = getString(R.string.search_tickets)
+            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        }
+
         searchBtn.setOnClickListener {
             val dateText = dateEdit.text.toString().trim()
             if (dateText.isEmpty()) {

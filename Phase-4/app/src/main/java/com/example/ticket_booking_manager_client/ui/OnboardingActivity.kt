@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.airbnb.lottie.LottieAnimationView
 import com.example.ticket_booking_manager_client.MainActivity
 import com.example.ticket_booking_manager_client.R
 import com.example.ticket_booking_manager_client.data.AppPrefs
@@ -19,8 +20,10 @@ import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class OnboardingActivity : AppCompatActivity(), CoroutineScope by MainScope() {
+
 
     data class Slide(val imageRes: Int, val title: String, val subtitle: String)
 
@@ -38,14 +41,28 @@ class OnboardingActivity : AppCompatActivity(), CoroutineScope by MainScope() {
         val tabs = findViewById<TabLayout>(R.id.tabs)
         val skip = findViewById<MaterialButton>(R.id.skipBtn)
         val getStarted = findViewById<MaterialButton>(R.id.getStartedBtn)
+        val intro = findViewById<LottieAnimationView>(R.id.onboardingIntro)
+        val header = findViewById<TextView>(R.id.header)
 
         pager.adapter = SlidesAdapter(slides)
         pager.setPageTransformer { page, position ->
-            page.alpha = 0.2f + (1 - kotlin.math.abs(position)) * 0.8f
-            page.scaleY = 0.9f + (1 - kotlin.math.abs(position)) * 0.1f
+            page.alpha = 0.2f + (1 - abs(position)) * 0.8f
+            page.scaleY = 0.9f + (1 - abs(position)) * 0.1f
             page.translationX = -position * page.width * 0.2f
         }
         TabLayoutMediator(tabs, pager) { _, _ -> }.attach()
+
+        // Fade out the intro Lottie, fade in the actual content
+        intro.addAnimatorListener(object : android.animation.AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                intro.animate().alpha(0f).setDuration(250).withEndAction {
+                    intro.visibility = View.GONE
+                    listOf(header, pager, tabs, skip, getStarted).forEach {
+                        it.animate().alpha(1f).setDuration(250).start()
+                    }
+                }.start()
+            }
+        })
 
         skip.setOnClickListener { finishOnboarding() }
         getStarted.setOnClickListener { finishOnboarding() }

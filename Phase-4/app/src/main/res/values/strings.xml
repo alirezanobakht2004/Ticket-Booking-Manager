@@ -1,3 +1,7 @@
-<resources>
-    <string name="app_name">Ticket-Booking-Manager-Client</string>
+<?xml version="1.0" encoding="utf-8"?> <resources> <string name="app_name">Ticket Booking Manager</string> <string name="home_subtitle">Find, compare and book your next trip</string> <string name="login">Login</string> <string name="logout">Logout</string> <string name="book_tickets">Book Tickets</string> <string name="view_bookings">View Bookings</string> <string name="skip">Skip</string> <string name="get_started">Get started</string> <string name="search">Search</string> <string name="search_tickets">Search tickets</string> <string name="yyyymmdd">YYYY-MM-DD</string> <string name="phone_or_email">Phone or Email</string> <string name="request_otp">Request OTP</string> <string name="enter_otp">Enter OTP</string> <string name="verify_and_continue">Verify and Continue</string> <string name="login_title">Sign in with OTP</string> <string name="login_helper">We’ll send a one-time code to your phone or email.</string> <string name="reservations">Reservations</string> <string name="ticket_details">Ticket details</string> <string name="register">Register</string>
+    <string name="register_title">Create your account</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="password">Password</string>
+    <string name="register_success">Registered successfully</string>
 </resources>

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -5,11 +6,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/onboardingIntro"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        app:lottie_rawRes="@raw/splash_lottie"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="false"
+        app:lottie_repeatCount="0"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <TextView
         android:id="@+id/header"
         android:text="@string/app_name"
         android:textStyle="bold"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
+        android:alpha="0"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -20,6 +35,7 @@
         android:id="@+id/pager"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:alpha="0"
         app:layout_constraintTop_toBottomOf="@id/header"
         app:layout_constraintBottom_toTopOf="@+id/tabs"
         app:layout_constraintStart_toStartOf="parent"
@@ -30,6 +46,7 @@
         android:id="@+id/tabs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:alpha="0"
         app:tabIndicatorFullWidth="false"
         app:layout_constraintTop_toBottomOf="@id/pager"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,7 +55,8 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/skipBtn"
         style="?attr/materialButtonOutlinedStyle"
-        android:text="Skip"
+        android:text="@string/skip"
+        android:alpha="0"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/tabs"
@@ -49,7 +67,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/getStartedBtn"
-        android:text="Get started"
+        android:text="@string/get_started"
+        android:alpha="0"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/tabs"
@@ -57,5 +76,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginStart="8dp"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+

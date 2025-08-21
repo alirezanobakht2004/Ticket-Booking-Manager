@@ -11,7 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
     // For emulator to hit localhost Flask: http://10.0.2.2:5000
-    private const val BASE_URL = "http://10.0.2.2:5000/"
+    private const val BASE_URL = "http://31.56.227.174:5000/"
 
     fun create(context: Context): ApiService {
         val tokenStore = TokenStore(context)

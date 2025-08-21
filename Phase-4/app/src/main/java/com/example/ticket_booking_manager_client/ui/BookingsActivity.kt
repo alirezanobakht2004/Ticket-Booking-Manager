@@ -42,6 +42,11 @@ class BookingsActivity : AppCompatActivity() {
         historyRV.layoutManager = LinearLayoutManager(this)
         historyRV.adapter = historyAdapter
 
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack)?.apply {
+            title = getString(R.string.reservations)
+            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        }
+
         swipe.setOnRefreshListener { loadAll() }
 
         loadAll()
