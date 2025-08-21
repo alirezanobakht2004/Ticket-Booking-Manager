@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.example.ticket_booking_manager_client"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "com.example.ticket_booking_manager_client"
         minSdk = 24
@@ -14,6 +15,7 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -36,7 +38,7 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.1")
     implementation("androidx.fragment:fragment-ktx:1.8.2")
 
-    // --- NEW ---
+    // Networking + coroutines + datastore
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

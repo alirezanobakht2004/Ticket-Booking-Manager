@@ -1,13 +1,13 @@
 pluginManagement {
     repositories {
-        google()                               // official
-        maven { url = uri("https://maven.google.com") }   // official alt
+        google()
+        maven { url = uri("https://maven.google.com") }
         mavenCentral()
         gradlePluginPortal()
 
-        // If you’re in a region/network that can’t reach Google, add ONE mirror:
-        // maven { url = uri("https://mirrors.cloud.tencent.com/repository/google") }
-        // or:
+        // Optional mirror (pick ONE if you need it):
+        maven { url = uri("https://mirrors.cloud.tencent.com/repository/google") }
+        // or
         // maven { url = uri("https://maven.aliyun.com/repository/google") }
     }
     plugins {
