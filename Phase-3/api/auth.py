@@ -16,14 +16,11 @@ def request_otp():
     current_app.logger.debug(f"Received request for OTP: phone={phone}, email={email}")
 
     if not user_key:
-        current_app.logger.warning("User key (phone or email) is missing.")
         return jsonify({'status': 'error', 'message': 'Phone or email is required.'}), 400
 
-    otp = request_otp_service(user_key, email=email) 
-
-    current_app.logger.debug(f"Generated OTP for user {user_key}: {otp}")
-
-    return jsonify({'status': 'success', 'message': 'OTP sent.', 'otp': otp})
+    # Important: Do not return the OTP in production
+    request_otp_service(user_key, email=email, phone=phone)
+    return jsonify({'status': 'success', 'message': 'OTP sent.'}), 200
 
 
 @auth_bp.route('/login/verify-otp', methods=['POST'])

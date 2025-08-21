@@ -24,3 +24,7 @@ class Config:
     EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'your_email_password')
     SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
     SMTP_PORT = int(os.environ.get('SMTP_PORT', 465))
+    
+    # SMS
+    SMSIR_API_KEY = os.getenv("SMSIR_API_KEY")  # set in environment
+    SMSIR_TEMPLATE_ID = int(os.getenv("SMSIR_TEMPLATE_ID", "245375"))  # sms template

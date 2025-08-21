@@ -1,3 +1,4 @@
+from services.sms_utils import send_otp_sms_template
 from utils.otp_utils import generate_otp
 from services.cache_service import store_otp, get_otp, delete_otp
 from utils.jwt_utils import create_jwt
@@ -10,15 +11,19 @@ from services.cache_service import update_user_cache
 from utils.password_utils import check_password
 from utils.email_utils import send_otp_email  # import the email sending utility
 
-def request_otp_service(user_key, email=None):
+def request_otp_service(user_key, email=None, phone=None):
     otp = generate_otp()
     store_otp(user_key, otp)
+
     if email:
         success = send_otp_email(email, otp)
         if not success:
-            # Optionally handle email sending failure (log or raise)
             print(f"Failed to send OTP email to {email}")
-    return otp
+
+    if phone:
+        sms_ok = send_otp_sms_template(phone, otp)
+        if not sms_ok:
+            print(f"Failed to send OTP SMS to {phone}")
 
 def verify_otp_service(user_key, otp_input, phone=None, email=None):
     otp_stored = get_otp(user_key)
