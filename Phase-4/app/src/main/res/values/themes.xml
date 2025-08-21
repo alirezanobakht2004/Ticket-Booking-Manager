@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3 (Views) theme -->
+    <!-- App theme: Material 3 DayNight with no action bar -->
     <style name="Theme.TicketBookingManagerClient" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize if you want -->
+        <!-- System bars (use Material color roles for consistency) -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
     </style>
+
+    <!-- Splash theme using SplashScreen API; after splash, apply Material3 app theme -->
+    <style name="Theme.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.TicketBookingManagerClient</item>
+    </style>
+
 </resources>

@@ -9,11 +9,12 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ticket_booking_manager_client"
-        minSdk = 24
+        minSdk = 31
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
 
     compileOptions {
@@ -46,7 +47,17 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // Splash screen API
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // ViewPager2 for onboarding slides
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+
+    // Coil (optional now, for loading remote logos later)
+    implementation("io.coil-kt:coil:2.6.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+
 }

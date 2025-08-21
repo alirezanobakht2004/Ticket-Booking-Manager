@@ -39,7 +39,28 @@ class SearchActivity : AppCompatActivity() {
         resultsRV.layoutManager = LinearLayoutManager(this)
         resultsRV.adapter = adapter
 
-        findViewById<Button>(R.id.searchBtn).setOnClickListener { doSearch() }
+        // at onCreate:
+        findViewById<Button>(R.id.searchBtn).setOnClickListener {
+            // open MaterialDatePicker if date is empty
+            val dateText = dateEdit.text.toString().trim()
+            if (dateText.isEmpty()) {
+                val picker = com.google.android.material.datepicker.MaterialDatePicker.Builder
+                    .datePicker()
+                    .setTitleText("Select travel date")
+                    .build()
+                picker.addOnPositiveButtonClickListener { utcMillis ->
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                    // choose the TZ you want; often user local is nicer than UTC
+                    sdf.timeZone = java.util.TimeZone.getDefault()
+                    dateEdit.setText(sdf.format(java.util.Date(utcMillis))) // YYYY-MM-DD
+                    doSearch()
+                }
+                picker.show(supportFragmentManager, "date")
+            } else {
+                doSearch()
+            }
+        }
+
 
         lifecycleScope.launch {
             val resp = repo.getCities()
@@ -67,12 +88,19 @@ class SearchActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val resp = repo.searchTickets(originId, destId, date)
-            val list: List<TicketListItem> = resp.body()?.tickets ?: emptyList()
-            adapter.submit(list)
-            if (list.isEmpty()) {
-                Toast.makeText(this@SearchActivity, "No tickets found", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(this@SearchActivity, "Searching…", Toast.LENGTH_SHORT).show()
+            runCatching { repo.searchTickets(originId, destId, date) }
+                .onSuccess { resp ->
+                    val list: List<TicketListItem> = resp.body()?.tickets ?: emptyList()
+                    adapter.submit(list)
+                    if (list.isEmpty()) {
+                        Toast.makeText(this@SearchActivity, "No tickets found", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .onFailure {
+                    Toast.makeText(this@SearchActivity, "Network error: ${it.message}", Toast.LENGTH_LONG).show()
+                }
         }
+
     }
 }
