@@ -5,19 +5,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ticket_booking_manager_client.R
 import com.example.ticket_booking_manager_client.data.remote.models.TicketListItem
+import java.text.NumberFormat
+import java.util.Locale
 
 class TicketsAdapter(
-    private var items: List<TicketListItem>,
     private val onClick: (TicketListItem) -> Unit
-) : RecyclerView.Adapter<TicketsAdapter.VH>() {
+) : ListAdapter<TicketListItem, TicketsAdapter.VH>(TicketDiff) {
 
-    fun submit(list: List<TicketListItem>) {
-        items = list
-        notifyDataSetChanged()
-    }
+    private val currency = NumberFormat.getCurrencyInstance(Locale.getDefault())
 
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val icon: ImageView = v.findViewById(R.id.rowIcon)
@@ -32,7 +32,7 @@ class TicketsAdapter(
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val t = items[position]
+        val t = getItem(position)
 
         val (iconRes, company) = when {
             !t.airline_name.isNullOrBlank() -> R.drawable.ic_plane_big to t.airline_name
@@ -42,11 +42,28 @@ class TicketsAdapter(
         }
 
         holder.icon.setImageResource(iconRes)
-        holder.title.text = "Ticket #${t.ticket_id} • ${company ?: ""}"
+        holder.icon.contentDescription = when (iconRes) {
+            R.drawable.ic_bus_big -> "Bus"
+            R.drawable.ic_train_big -> "Train"
+            else -> "Flight"
+        }
+
+        holder.title.text = "Ticket #${t.ticket_id} -  ${company ?: ""}"
         holder.subtitle.text = "${t.departure_time} → ${t.arrival_time}"
-        holder.price.text = t.price.toString()
+        holder.price.text = try {
+            currency.format(t.price)
+        } catch (_: Exception) {
+            t.price.toString()
+        }
+
         holder.itemView.setOnClickListener { onClick(t) }
     }
+}
 
-    override fun getItemCount() = items.size
+private object TicketDiff : DiffUtil.ItemCallback<TicketListItem>() {
+    override fun areItemsTheSame(oldItem: TicketListItem, newItem: TicketListItem) =
+        oldItem.ticket_id == newItem.ticket_id
+
+    override fun areContentsTheSame(oldItem: TicketListItem, newItem: TicketListItem) =
+        oldItem == newItem
 }

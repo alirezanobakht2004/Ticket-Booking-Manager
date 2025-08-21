@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:padding="16dp"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <TextView android:id="@+id/detailsText"
+    <TextView
+        android:id="@+id/detailsText"
         android:textSize="16sp"
         android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
-    <Button android:id="@+id/reserveBtn"
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/detailsLoading"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        app:lottie_rawRes="@raw/loading_spinner"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        android:layout_marginTop="12dp"/>
+
+    <Button
+        android:id="@+id/reserveBtn"
         android:text="Reserve (10 min)"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="16dp"/>
 
-    <Button android:id="@+id/payBtn"
+    <Button
+        android:id="@+id/payBtn"
         android:text="Pay Now"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="8dp"/>

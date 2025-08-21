@@ -2,6 +2,7 @@ package com.example.ticket_booking_manager_client.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +20,9 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var dateEdit: EditText
     private lateinit var resultsRV: androidx.recyclerview.widget.RecyclerView
     private lateinit var adapter: TicketsAdapter
+    private lateinit var searchBtn: Button
+    private val loading by lazy { findViewById<View>(R.id.searchLoading) }
+
     private var cities: List<City> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,8 +34,9 @@ class SearchActivity : AppCompatActivity() {
         destinationSpinner = findViewById(R.id.destinationSpinner)
         dateEdit = findViewById(R.id.dateEdit)
         resultsRV = findViewById(R.id.resultsRV)
+        searchBtn = findViewById(R.id.searchBtn)
 
-        adapter = TicketsAdapter(emptyList()) { item ->
+        adapter = TicketsAdapter { item ->
             val i = Intent(this, TicketDetailsActivity::class.java)
             i.putExtra("ticket_id", item.ticket_id)
             startActivity(i)
@@ -39,9 +44,7 @@ class SearchActivity : AppCompatActivity() {
         resultsRV.layoutManager = LinearLayoutManager(this)
         resultsRV.adapter = adapter
 
-        // at onCreate:
-        findViewById<Button>(R.id.searchBtn).setOnClickListener {
-            // open MaterialDatePicker if date is empty
+        searchBtn.setOnClickListener {
             val dateText = dateEdit.text.toString().trim()
             if (dateText.isEmpty()) {
                 val picker = com.google.android.material.datepicker.MaterialDatePicker.Builder
@@ -50,9 +53,8 @@ class SearchActivity : AppCompatActivity() {
                     .build()
                 picker.addOnPositiveButtonClickListener { utcMillis ->
                     val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                    // choose the TZ you want; often user local is nicer than UTC
                     sdf.timeZone = java.util.TimeZone.getDefault()
-                    dateEdit.setText(sdf.format(java.util.Date(utcMillis))) // YYYY-MM-DD
+                    dateEdit.setText(sdf.format(java.util.Date(utcMillis)))
                     doSearch()
                 }
                 picker.show(supportFragmentManager, "date")
@@ -61,7 +63,7 @@ class SearchActivity : AppCompatActivity() {
             }
         }
 
-
+        // Load cities
         lifecycleScope.launch {
             val resp = repo.getCities()
             cities = resp.body()?.cities ?: emptyList()
@@ -79,6 +81,10 @@ class SearchActivity : AppCompatActivity() {
             Toast.makeText(this, "Select origin & destination", Toast.LENGTH_SHORT).show()
             return
         }
+        if (originIdx == destIdx) {
+            Toast.makeText(this, "Origin and destination cannot be the same", Toast.LENGTH_SHORT).show()
+            return
+        }
         val originId = cities[originIdx].location_id
         val destId = cities[destIdx].location_id
         val date = dateEdit.text.toString().trim()
@@ -87,12 +93,12 @@ class SearchActivity : AppCompatActivity() {
             return
         }
 
+        setLoading(true)
         lifecycleScope.launch {
-            Toast.makeText(this@SearchActivity, "Searching…", Toast.LENGTH_SHORT).show()
             runCatching { repo.searchTickets(originId, destId, date) }
                 .onSuccess { resp ->
                     val list: List<TicketListItem> = resp.body()?.tickets ?: emptyList()
-                    adapter.submit(list)
+                    adapter.submitList(list)
                     if (list.isEmpty()) {
                         Toast.makeText(this@SearchActivity, "No tickets found", Toast.LENGTH_SHORT).show()
                     }
@@ -100,7 +106,12 @@ class SearchActivity : AppCompatActivity() {
                 .onFailure {
                     Toast.makeText(this@SearchActivity, "Network error: ${it.message}", Toast.LENGTH_LONG).show()
                 }
+            setLoading(false)
         }
+    }
 
+    private fun setLoading(loadingNow: Boolean) {
+        loading.visibility = if (loadingNow) View.VISIBLE else View.GONE
+        searchBtn.isEnabled = !loadingNow
     }
 }

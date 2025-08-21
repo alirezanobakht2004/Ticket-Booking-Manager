@@ -31,10 +31,15 @@ class LoginActivity : AppCompatActivity() {
 
         requestOtp.setOnClickListener {
             val input = phoneOrEmail.text.toString().trim()
+            requestOtp.isEnabled = false
             lifecycleScope.launch {
-                val resp = if (input.contains("@")) repo.requestOtp(email = input) else repo.requestOtp(phone = input)
-                val msg = resp.body()?.message ?: resp.errorBody()?.string() ?: "OTP requested"
-                Toast.makeText(this@LoginActivity, msg, Toast.LENGTH_SHORT).show()
+                try {
+                    val resp = if (input.contains("@")) repo.requestOtp(email = input) else repo.requestOtp(phone = input)
+                    val msg = resp.body()?.message ?: resp.errorBody()?.string() ?: "OTP requested"
+                    Toast.makeText(this@LoginActivity, msg, Toast.LENGTH_SHORT).show()
+                } finally {
+                    requestOtp.isEnabled = true
+                }
             }
         }
 
@@ -45,14 +50,19 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "Enter OTP", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            verifyOtp.isEnabled = false
             lifecycleScope.launch {
-                val resp = if (input.contains("@")) repo.verifyOtp(email = input, otp = otp) else repo.verifyOtp(phone = input, otp = otp)
-                if (resp.isSuccessful && !resp.body()?.token.isNullOrBlank()) {
-                    tokenStore.saveToken(resp.body()!!.token!!)
-                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                    finish()
-                } else {
-                    Toast.makeText(this@LoginActivity, resp.body()?.message ?: "Login failed", Toast.LENGTH_SHORT).show()
+                try {
+                    val resp = if (input.contains("@")) repo.verifyOtp(email = input, otp = otp) else repo.verifyOtp(phone = input, otp = otp)
+                    if (resp.isSuccessful && !resp.body()?.token.isNullOrBlank()) {
+                        tokenStore.saveToken(resp.body()!!.token!!)
+                        startActivity(Intent(this@LoginActivity, com.example.ticket_booking_manager_client.MainActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, resp.body()?.message ?: "Login failed", Toast.LENGTH_SHORT).show()
+                    }
+                } finally {
+                    verifyOtp.isEnabled = true
                 }
             }
         }

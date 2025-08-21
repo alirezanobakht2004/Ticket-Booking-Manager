@@ -40,6 +40,11 @@ class OnboardingActivity : AppCompatActivity(), CoroutineScope by MainScope() {
         val getStarted = findViewById<MaterialButton>(R.id.getStartedBtn)
 
         pager.adapter = SlidesAdapter(slides)
+        pager.setPageTransformer { page, position ->
+            page.alpha = 0.2f + (1 - kotlin.math.abs(position)) * 0.8f
+            page.scaleY = 0.9f + (1 - kotlin.math.abs(position)) * 0.1f
+            page.translationX = -position * page.width * 0.2f
+        }
         TabLayoutMediator(tabs, pager) { _, _ -> }.attach()
 
         skip.setOnClickListener { finishOnboarding() }

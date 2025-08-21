@@ -1,17 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App theme: Material 3 DayNight with no action bar -->
+    <!-- App theme -->
     <style name="Theme.TicketBookingManagerClient" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- System bars (use Material color roles for consistency) -->
+        <!-- Surface-based system bars for consistency -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
+
+        <!-- Material 3 color roles can be defined in values/colors.xml (optional) -->
+        <!-- <item name="colorPrimary">@color/seed</item> etc. -->
+
+        <!-- Global text appearances (optional but recommended) -->
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.App.BodyMedium</item>
+
+        <!-- Buttons -->
+        <item name="buttonStyle">@style/Widget.App.Button</item>
+        <item name="materialButtonStyle">@style/Widget.App.MaterialButton</item>
     </style>
 
-    <!-- Splash theme using SplashScreen API; after splash, apply Material3 app theme -->
+    <!-- Typography -->
+    <style name="TextAppearance.App.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium" />
+    <style name="TextAppearance.App.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall" />
+    <style name="TextAppearance.App.BodyMedium" parent="TextAppearance.Material3.BodyMedium" />
+
+    <!-- Buttons -->
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+    </style>
+
+    <style name="Widget.App.MaterialButton" parent="Widget.Material3.Button">
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- Splash theme using SplashScreen -->
     <style name="Theme.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#FFFFFF</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.TicketBookingManagerClient</item>
     </style>
-
 </resources>
