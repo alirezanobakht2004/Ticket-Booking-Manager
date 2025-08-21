@@ -36,6 +36,8 @@
         <activity android:name=".ui.BookingsActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".ui.RegisterActivity" android:exported="false" />
+        <activity android:name=".ui.DashboardActivity" android:exported="false" />
+        <activity android:name=".ui.OtpActivity" android:exported="false" />
 
     </application>
 

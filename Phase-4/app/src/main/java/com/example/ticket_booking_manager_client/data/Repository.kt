@@ -18,8 +18,9 @@ class Repository (context: Context) {
     suspend fun updateProfile(body: UpdateProfileBody) = api.updateProfile(body)
 
     // Cities
-    suspend fun getCities() = api.getCities()
-
+    suspend fun getCities() = api.getCities().also {
+        android.util.Log.d("APP/Repo", "getCities() called")
+    }
     // Tickets
     suspend fun searchTickets(
         originId: Int, destinationId: Int, travelDate: String,

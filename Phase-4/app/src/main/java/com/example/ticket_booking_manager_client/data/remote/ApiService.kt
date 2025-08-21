@@ -20,7 +20,7 @@ interface ApiService {
     suspend fun updateProfile(@Body body: UpdateProfileBody): Response<ApiMessage>
 
     // --- Cities ---
-    @GET("api/cities/")
+    @GET("api/cities")
     suspend fun getCities(): Response<CitiesResponse>
 
     // --- Tickets ---

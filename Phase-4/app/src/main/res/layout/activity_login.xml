@@ -36,13 +36,8 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="8dp"/>
 
-            <EditText
-                android:id="@+id/phoneOrEmail"
-                android:hint="@string/phone_or_email"
-                android:inputType="textEmailAddress|phone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"/>
+            <!-- Email OR phone in a single field. Keep keyboard helpful for both. -->
+            <EditText android:id="@+id/phoneOrEmail" android:hint="@string/phone_or_email" android:inputType="textVisiblePassword" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp"/>
 
             <TextView
                 android:text="@string/login_helper"
