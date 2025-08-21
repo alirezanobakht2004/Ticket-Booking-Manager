@@ -98,14 +98,14 @@ data class IssuedTicket(
 
 // Cancellation
 data class CancelPenaltyResponse(
-    val status: String?,
-    val ticket_id: Int?,
-    val ticket_price: Double?,
-    val departure_time: String?,
-    val hours_remaining: Double?,
-    val penalty_percentage: Int?,
-    val penalty_amount: Double?,
-    val refundable_amount: Double?
+    val status: String? = null,
+    val ticket_id: Int? = null,
+    val ticket_price: Double? = null,
+    val departure_time: String? = null,
+    val hours_remaining: Double? = null,
+    val penalty_percentage: Int? = null,
+    val penalty_amount: Double? = null,
+    val refundable_amount: Double? = null
 )
 
 data class CancelPerformResponse(

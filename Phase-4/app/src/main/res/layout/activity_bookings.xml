@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="16dp"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/refreshActive"
+        android:text="Refresh Active"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/activeRV"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:layout_marginTop="8dp"/>
+
+    <Button
+        android:id="@+id/refreshHistory"
+        android:text="Refresh History"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/historyRV"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:layout_marginTop="8dp"/>
+</LinearLayout>

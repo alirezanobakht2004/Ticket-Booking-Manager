@@ -18,15 +18,26 @@
         app:layout_constraintEnd_toEndOf="parent"/>
 
     <Button
+        android:id="@+id/authButton"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"/>
+
+    <Button
         android:id="@+id/bookButton"
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Book Tickets"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        app:layout_constraintTop_toBottomOf="@id/authButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"/>
+        android:layout_marginTop="16dp"/>
 
     <Button
         android:id="@+id/viewBookingsButton"

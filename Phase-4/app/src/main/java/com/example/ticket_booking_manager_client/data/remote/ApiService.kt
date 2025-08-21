@@ -26,16 +26,16 @@ interface ApiService {
     // --- Tickets ---
     @GET("api/tickets/search")
     suspend fun searchTickets(
-            @Query("origin_id") originId: Int,
-            @Query("destination_id") destinationId: Int,
-            @Query("travel_date") travelDate: String,
-            @Query("vehicle_type") vehicleType: String? = null,
-            @Query("min_price") minPrice: Double? = null,
-            @Query("max_price") maxPrice: Double? = null,
-            @Query("company_name") company: String? = null,
-            @Query("departure_start") depStart: String? = null,
-            @Query("departure_end") depEnd: String? = null,
-            @Query("travel_class") travelClass: Int? = null
+        @Query("origin_id") originId: Int,
+        @Query("destination_id") destinationId: Int,
+        @Query("travel_date") travelDate: String,
+        @Query("vehicle_type") vehicleType: String? = null,
+        @Query("min_price") minPrice: Double? = null,
+        @Query("max_price") maxPrice: Double? = null,
+        @Query("company_name") company: String? = null,
+        @Query("departure_start") depStart: String? = null,
+        @Query("departure_end") depEnd: String? = null,
+        @Query("travel_class") travelClass: Int? = null
     ): Response<TicketsSearchResponse>
 
     @GET("api/tickets/details/{ticket_id}")
@@ -60,7 +60,7 @@ interface ApiService {
     // --- Payments ---
     @POST("api/payments/pay/ticket/{ticket_id}")
     suspend fun payForTicket(
-            @Path("ticket_id") ticketId: Int,
-            @Body body: PaymentBody
+        @Path("ticket_id") ticketId: Int,
+        @Body body: PaymentBody
     ): Response<PaymentResponse>
 }

@@ -4,7 +4,7 @@ import android.content.Context
 import com.example.ticket_booking_manager_client.data.remote.ApiClient
 import com.example.ticket_booking_manager_client.data.remote.models.*
 
-class Repository(context: Context) {
+class Repository (context: Context) {
     private val api = ApiClient.create(context)
 
     // Auth
