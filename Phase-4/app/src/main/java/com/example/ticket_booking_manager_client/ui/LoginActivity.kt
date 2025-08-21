@@ -35,6 +35,14 @@ class LoginActivity : AppCompatActivity() {
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
         }
 
+        intent.getStringExtra("prefill_email")?.let {
+            findViewById<EditText>(R.id.phoneOrEmail).setText(it)
+        }
+        intent.getStringExtra("prefill_phone")?.let {
+            if (findViewById<EditText>(R.id.phoneOrEmail).text.isNullOrBlank())
+                findViewById<EditText>(R.id.phoneOrEmail).setText(it)
+        }
+
         val goToRegister = findViewById<com.google.android.material.button.MaterialButton>(R.id.goToRegister)
         goToRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))

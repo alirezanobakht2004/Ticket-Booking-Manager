@@ -7,3 +7,5 @@ bcrypt
 pyjwt
 cryptography
 smsir-python
+request
+elasticsearch

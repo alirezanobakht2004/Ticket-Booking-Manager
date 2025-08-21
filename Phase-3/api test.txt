@@ -106,4 +106,3 @@ Get reservation history:
 GET http://localhost:5000/api/reservations/history
 
 
-8)

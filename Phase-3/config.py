@@ -28,3 +28,27 @@ class Config:
     # SMS
     SMSIR_API_KEY = os.getenv("SMSIR_API_KEY")  # set in environment
     SMSIR_TEMPLATE_ID = int(os.getenv("SMSIR_TEMPLATE_ID", "245375"))  # sms template
+    
+    ELASTICSEARCH_HOST = "localhost"
+
+    ELASTICSEARCH_PORT = 9200
+
+    ELASTICSEARCH_SCHEME = "http"
+
+    ELASTICSEARCH_INDEX_TICKETS = "tickets"
+
+    REDIS_HOST = "localhost" # optional
+
+    REDIS_PORT = 6379 # optional
+
+    SEARCH_CACHE_TTL = 60 # seconds, optional
+    
+    # Elasticsearch Configuration
+    ELASTICSEARCH_ENABLE = True           # Enable/disable Elasticsearch integration
+    ELASTICSEARCH_BACKFILL_ON_START = False  # Backfill ES on app startup (not recommended for production)
+
+    # Logging Configuration
+    FLASK_DEBUG_LOG = True                # Enable debug-level logging
+
+    # Server Configuration
+    PORT = 5000                           # Default port for the Flask application

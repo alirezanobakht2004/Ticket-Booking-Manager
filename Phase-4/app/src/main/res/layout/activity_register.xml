@@ -53,9 +53,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"/>
 
-            <!-- Email OR phone in a single field. Keep keyboard helpful for both. -->
-            <EditText android:id="@+id/phoneOrEmail" android:hint="@string/phone_or_email" android:inputType="textVisiblePassword" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp"/>
+            <!-- Email -->
+            <EditText android:id="@+id/emailEdit" android:hint="@string/email" android:inputType="textEmailAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
 
+            <!-- Phone -->
+            <EditText android:id="@+id/phoneEdit" android:hint="@string/phone" android:inputType="phone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
             <EditText
                 android:id="@+id/password"
                 android:hint="@string/password"

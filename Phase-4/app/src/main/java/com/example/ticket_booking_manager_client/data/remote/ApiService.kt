@@ -63,4 +63,10 @@ interface ApiService {
         @Path("ticket_id") ticketId: Int,
         @Body body: PaymentBody
     ): Response<PaymentResponse>
+
+    @POST("api/reservations/pay/{reservation_id}")
+    suspend fun payForReservation(
+        @Path("reservation_id") reservationId: Int,
+        @Body body: PaymentBody
+    ): Response<PaymentResponse>
 }

@@ -16,7 +16,9 @@ import java.util.Locale
 class TicketDetailsActivity : AppCompatActivity() {
     private lateinit var repo: Repository
     private var ticketId: Int = -1
-    private var reserved: Boolean = false
+
+    // Keep the most recent reservation id we create during this session
+    private var lastReservationId: Int? = null
 
     private val detailsText by lazy { findViewById<TextView>(R.id.detailsText) }
     private val reserveBtn by lazy { findViewById<Button>(R.id.reserveBtn) }
@@ -62,16 +64,27 @@ class TicketDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun doReserve() {
+    private fun doReserve(validityMinutes: Int = 10) {
         setButtonsEnabled(false)
         lifecycleScope.launch {
             try {
-                val resp = repo.reserveTicket(ticketId, 10)
-                if (resp.isSuccessful && resp.body()?.reservation_id != null) {
-                    reserved = true
-                    Toast.makeText(this@TicketDetailsActivity, "Reserved. ID=${resp.body()!!.reservation_id}", Toast.LENGTH_SHORT).show()
+                val resp = repo.reserveTicket(ticketId, validityMinutes)
+                if (resp.isSuccessful) {
+                    val body = resp.body()
+                    if (body?.reservation_id != null) {
+                        lastReservationId = body.reservation_id
+                        Toast.makeText(
+                            this@TicketDetailsActivity,
+                            "Reserved. ID=$lastReservationId (valid $validityMinutes min)",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        val msg = "Reserve failed"
+                        Toast.makeText(this@TicketDetailsActivity, msg, Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    Toast.makeText(this@TicketDetailsActivity, "Reserve failed", Toast.LENGTH_SHORT).show()
+                    val msg = "Reserve failed (${resp.code()})"
+                    Toast.makeText(this@TicketDetailsActivity, msg, Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@TicketDetailsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -85,12 +98,36 @@ class TicketDetailsActivity : AppCompatActivity() {
         setButtonsEnabled(false)
         lifecycleScope.launch {
             try {
-                val resp = repo.payForTicket(ticketId, "CARD")
-                if (resp.isSuccessful && resp.body()?.status == "success") {
-                    Toast.makeText(this@TicketDetailsActivity, "Payment successful", Toast.LENGTH_SHORT).show()
-                    finish()
+                if (lastReservationId == null) {
+                    val r = repo.reserveTicket(ticketId, 10)
+                    if (r.isSuccessful && r.body()?.reservation_id != null) {
+                        lastReservationId = r.body()!!.reservation_id
+                        Toast.makeText(
+                            this@TicketDetailsActivity,
+                            "Reserved. ID=$lastReservationId",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        val msg = "Please reserve first"
+                        Toast.makeText(this@TicketDetailsActivity, msg, Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                }
+
+                val resId = lastReservationId!!
+                val payResp = repo.payForReservation(resId, "CARD")
+                if (payResp.isSuccessful) {
+                    val body = payResp.body()
+                    if (body?.status == "success") {
+                        Toast.makeText(this@TicketDetailsActivity, "Payment successful", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        val msg = body?.message ?: "Payment failed"
+                        Toast.makeText(this@TicketDetailsActivity, msg, Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    Toast.makeText(this@TicketDetailsActivity, resp.body()?.message ?: "Payment failed", Toast.LENGTH_SHORT).show()
+                    val msg = "Payment failed (${payResp.code()})"
+                    Toast.makeText(this@TicketDetailsActivity, msg, Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@TicketDetailsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
