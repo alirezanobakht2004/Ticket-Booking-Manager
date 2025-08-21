@@ -6,3 +6,4 @@ python-dotenv
 bcrypt
 pyjwt
 cryptography
+smsir-python
