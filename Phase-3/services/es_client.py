@@ -13,96 +13,98 @@ _es_client: Optional[Elasticsearch] = None
 
 
 def build_ticket_search_query(params: Dict[str, Any], from_: int = 0, size: int = 20) -> Dict[str, Any]:
-    """
-    Construct a bool query for tickets based on params:
-      origin_id, destination_id, travel_date (YYYY-MM-DD),
-      vehicle_type, min_price, max_price, company_name,
-      departure_start (HH:MM), departure_end (HH:MM),
-      travel_class
-    Note: This is a query builder; the execution should live in ticket_service.
-    """
     must = []
     filters = []
 
     origin_id = params.get("origin_id")
     destination_id = params.get("destination_id")
-    travel_date = params.get("travel_date")  # YYYY-MM-DD
+    travel_date = params.get("travel_date")      # YYYY-MM-DD
     vehicle_type = params.get("vehicle_type")
     min_price = params.get("min_price")
     max_price = params.get("max_price")
     company_name = params.get("company_name")
-    dep_start = params.get("departure_start")  # HH:MM
-    dep_end = params.get("departure_end")      # HH:MM
+    dep_start = params.get("departure_start")    # HH:MM
+    dep_end = params.get("departure_end")        # HH:MM
     travel_class = params.get("travel_class")
 
-    # Required constraints
     if origin_id is not None:
         filters.append({"term": {"origin_id": origin_id}})
     if destination_id is not None:
         filters.append({"term": {"destination_id": destination_id}})
 
-    # Date range for a given day (UTC)
+    # Day filter (fast exact date)
     if travel_date:
         filters.append({
             "range": {
                 "departure_time": {
-                    "gte": f"{travel_date}T00:00:00Z",
-                    "lt": f"{travel_date}T23:59:59Z"
+                    "gte": f"{travel_date}||/d",
+                    "lt":  f"{travel_date}||+1d/d"
+                    # optionally add: "time_zone": "+00:00"  # or your local TZ, e.g. "+03:30"
                 }
             }
         })
 
-    # Vehicle type
     if vehicle_type:
         filters.append({"term": {"vehicle_type": vehicle_type}})
 
-    # Price range
     price_range = {}
-    if min_price is not None:
-        price_range["gte"] = min_price
-    if max_price is not None:
-        price_range["lte"] = max_price
+    if min_price is not None: price_range["gte"] = min_price
+    if max_price is not None: price_range["lte"] = max_price
     if price_range:
         filters.append({"range": {"price": price_range}})
 
-    # Travel class
     if travel_class is not None:
         filters.append({"term": {"class_code": travel_class}})
 
-    # Company name: match phrase prefix for simple autocomplete-like behavior
+    # Company name: prefer exact/prefix on keyword (case-insensitive)
+    # Company name (operator) OR brand (manufacturer)
     if company_name:
         must.append({
-            "match_phrase_prefix": {
-                "company_name": {
-                    "query": company_name
+            "bool": {
+                "should": [
+                    {"term": {"company_name.raw": company_name}},                # exact
+                    {"prefix": {"company_name.raw": company_name}},              # startswith (case-sensitive)
+                    {"match_phrase_prefix": {"company_name": {"query": company_name}}},
+                    {"term": {"brand.raw": company_name}},                       # exact brand
+                    {"prefix": {"brand.raw": company_name}},                     # startswith brand
+                    {"match_phrase_prefix": {"brand": {"query": company_name}}}
+                ],
+                "minimum_should_match": 1
+            }
+        })
+
+
+    # Time window within the day using derived hour
+    # e.g. "07:30" => hour 7; "11:59" => hour 11
+    def _h(s: str) -> int:
+        try: return int(s[:2])
+        except: return None
+
+    if dep_start or dep_end:
+        # If you rely on departure_hour:
+        if True:  # keep as-is if you've reindexed; else use time range fallback below
+            hr = {}
+            if dep_start: hr["gte"] = int(dep_start[:2])
+            if dep_end:   hr["lte"] = int(dep_end[:2])
+            filters.append({"range": {"departure_hour": hr}})
+        # Fallback using absolute time within the day (works even without departure_hour)
+        filters.append({
+            "range": {
+                "departure_time": {
+                    "gte": f"{travel_date}T{dep_start or '00:00'}:00",
+                    "lte": f"{travel_date}T{dep_end or '23:59'}:59"
                 }
             }
         })
 
-    # Departure time window (HH:MM) — approximate via script or derived field
-    # Best practice: index hour/minute fields and use range on them.
-    # If you have derived fields like departure_hour, you can filter here.
-    # Example (if you later add departure_hour int field):
-    # if dep_start or dep_end:
-    #     hour_range = {}
-    #     if dep_start:
-    #         hour_range["gte"] = int(dep_start[:2])
-    #     if dep_end:
-    #         hour_range["lte"] = int(dep_end[:2])
-    #     filters.append({"range": {"departure_hour": hour_range}})
 
+    # Sorting by departure_time aligns with index sorting
     query = {
         "from": from_,
         "size": size,
-        "query": {
-            "bool": {
-                "must": must if must else [{"match_all": {}}],
-                "filter": filters
-            }
-        },
-        "sort": [
-            {"departure_time": {"order": "asc"}}
-        ]
+        "track_total_hits": True,
+        "query": {"bool": {"must": must or [{"match_all": {}}], "filter": filters}},
+        "sort": [{"departure_time": {"order": "asc"}}]
     }
     return query
 
@@ -179,88 +181,105 @@ def ensure_ticket_index() -> None:
     # Settings and mappings
     # Adjust analyzers or add completion fields if you plan autocomplete
     settings = {
-        "settings": {
-            "number_of_shards": 1,
-            "number_of_replicas": 0,
-            "analysis": {
-                "analyzer": {
-                    "edge_ngram_analyzer": {
-                        "type": "custom",
-                        "tokenizer": "edge_ngram_tokenizer",
-                        "filter": ["lowercase"]
-                    }
-                },
-                "tokenizer": {
-                    "edge_ngram_tokenizer": {
-                        "type": "edge_ngram",
-                        "min_gram": 2,
-                        "max_gram": 15,
-                        "token_chars": ["letter", "digit"]
-                    }
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,                  # prod: 1+
+        "refresh_interval": "30s",                # dev: "1s" if you prefer
+        "index": {
+            "sort.field": ["departure_time"],     # index sorting
+            "sort.order": ["asc"]
+        },
+        "analysis": {
+            "normalizer": {
+                "lowercase_normalizer": {
+                    "type": "custom",
+                    "filter": ["lowercase"]
+                }
+            },
+            "analyzer": {
+                "edge_ngram_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "edge_ngram_tokenizer",
+                    "filter": ["lowercase"]
+                }
+            },
+            "tokenizer": {
+                "edge_ngram_tokenizer": {
+                    "type": "edge_ngram",
+                    "min_gram": 2,
+                    "max_gram": 15,
+                    "token_chars": ["letter", "digit"]
                 }
             }
-        },
-        "mappings": {
-            "dynamic": "false",
-            "properties": {
-                # Identifiers
-                "ticket_id": {"type": "keyword"},
-                "vehicle_id": {"type": "integer"},
-                "reservation_id": {"type": "integer"},
+        }
+    },
+    "mappings": {
+        "dynamic": "false",
+        "properties": {
+            "ticket_id": {"type": "keyword"},
+            "vehicle_id": {"type": "integer"},
+            "reservation_id": {"type": "integer"},
 
-                # Locations
-                "origin_id": {"type": "integer"},
-                "destination_id": {"type": "integer"},
-                "origin_city": {
-                    "type": "text",
-                    "fields": {"raw": {"type": "keyword"}},
-                    "analyzer": "edge_ngram_analyzer",
-                    "search_analyzer": "standard"
+            "origin_id": {"type": "integer"},
+            "destination_id": {"type": "integer"},
+            "origin_city": {
+                "type": "text",
+                "fields": {
+                    "raw": {"type": "keyword"},
+                    "raw_ci": {"type": "keyword", "normalizer": "lowercase_normalizer"}
                 },
-                "destination_city": {
-                    "type": "text",
-                    "fields": {"raw": {"type": "keyword"}},
-                    "analyzer": "edge_ngram_analyzer",
-                    "search_analyzer": "standard"
+                "analyzer": "edge_ngram_analyzer",
+                "search_analyzer": "standard"
+            },
+            "destination_city": {
+                "type": "text",
+                "fields": {
+                    "raw": {"type": "keyword"},
+                    "raw_ci": {"type": "keyword", "normalizer": "lowercase_normalizer"}
                 },
+                "analyzer": "edge_ngram_analyzer",
+                "search_analyzer": "standard"
+            },
 
-                # Times
-                "departure_time": {"type": "date"},  # ISO8601 strings
-                "arrival_time": {"type": "date"},
+            "departure_time": {"type": "date"},
+            "arrival_time": {"type": "date"},
 
-                # Pricing and class
-                "price": {"type": "double"},
-                "class_code": {"type": "integer"},
+            # NEW derived fields
+            "departure_date": {"type": "date"},    # yyyy-MM-dd
+            "departure_hour": {"type": "byte"},    # 0..23
 
-                # Vehicle metadata
-                "vehicle_type": {"type": "keyword"},  # plane|bus|train
-                "brand": {
-                    "type": "text",
-                    "fields": {"raw": {"type": "keyword"}}
+            "price": {"type": "double"},
+            "class_code": {"type": "integer"},
+
+            "vehicle_type": {"type": "keyword"},
+            "brand": {
+                "type": "text",
+                "fields": {"raw": {"type": "keyword"}}
+            },
+            "model": {
+                "type": "text",
+                "fields": {"raw": {"type": "keyword"}}
+            },
+
+            "company_name": {
+                "type": "text",
+                "fields": {
+                    "raw": {"type": "keyword"},
+                    "raw_ci": {"type": "keyword", "normalizer": "lowercase_normalizer"},
+                    # completion suggester
+                    "suggest": {"type": "completion", "preserve_separators": True}
                 },
-                "model": {
-                    "type": "text",
-                    "fields": {"raw": {"type": "keyword"}}
-                },
+                "analyzer": "edge_ngram_analyzer",
+                "search_analyzer": "standard"
+            },
 
-                # Company naming variants (one of these will be present per type)
-                "company_name": {
-                    "type": "text",
-                    "fields": {"raw": {"type": "keyword"}},
-                    "analyzer": "edge_ngram_analyzer",
-                    "search_analyzer": "standard"
-                },
-
-                # Capacity
-                "capacity": {"type": "integer"},
-                "reserved_number": {"type": "integer"},
-
-                # Misc flags
-                "has_internet": {"type": "boolean"},
-                "snack_service": {"type": "boolean"},
-            }
+            "capacity": {"type": "integer"},
+            "reserved_number": {"type": "integer"},
+            "has_internet": {"type": "boolean"},
+            "snack_service": {"type": "boolean"},
         }
     }
+}
 
     try:
         es.indices.create(index=index, body=settings)
@@ -399,7 +418,22 @@ def normalize_ticket_doc(ticket: Dict[str, Any]) -> Dict[str, Any]:
         "has_internet": ticket.get("internet_connection") or ticket.get("plane_internet_connection") or ticket.get("train_internet_connection"),
         "snack_service": ticket.get("snack_service"),
     }
-    # Optional cleanup: remove None values to reduce index size
+    dep = ticket.get("departure_time")
+    from datetime import datetime
+    try:
+        if isinstance(dep, str):
+            # accept '...Z' or without Z
+            dep_dt = datetime.fromisoformat(dep.replace("Z", ""))
+        elif isinstance(dep, datetime):
+            dep_dt = dep
+        else:
+            dep_dt = None
+        if dep_dt:
+            doc["departure_date"] = dep_dt.date().isoformat()
+            doc["departure_hour"] = dep_dt.hour
+    except Exception:
+        pass
+
     return {k: v for k, v in doc.items() if v is not None}
 
 
@@ -435,3 +469,26 @@ def search_tickets_es(params: Dict[str, Any], page: int = 1, page_size: int = 20
     except Exception as e:
         _logger.error(f"Elasticsearch search failed: {e}")
         return {"results": [], "total": 0, "page": page, "page_size": page_size}
+
+def suggest_companies_es(prefix: str, size: int = 6) -> list[str]:
+    es = get_es_client()
+    index = get_ticket_index_name()
+    body = {
+        "suggest": {
+            "co": {
+                "prefix": prefix,
+                "completion": {
+                    "field": "company_name.suggest",
+                    "skip_duplicates": True,
+                    "size": size
+                }
+            }
+        }
+    }
+    try:
+        resp = es.search(index=index, body=body)
+        opts = resp.get("suggest", {}).get("co", [])[0].get("options", [])
+        return [o["text"] for o in opts]
+    except Exception as e:
+        _logger.error(f"company suggest failed: {e}")
+        return []

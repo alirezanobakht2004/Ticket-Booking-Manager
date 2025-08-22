@@ -1,7 +1,9 @@
 import logging
 from functools import wraps
-
+from services.es_client import get_es_client, get_ticket_index_name
 from flask import Blueprint, request, jsonify
+
+
 
 from services.ticket_service import (
     search_tickets_service,
@@ -156,3 +158,53 @@ def cancel_ticket(current_user_id, ticket_id):
     except Exception as e:
         logging.error(f"Error cancelling ticket {ticket_id} for user {current_user_id}: {e}")
         return jsonify({"status": "error", "message": "An internal error occurred during cancellation."}), 500
+    
+@ticket_bp.route('/suggest/company', methods=['GET'])   # note: uses ticket_bp (NOT tickets_bp)
+def suggest_company():
+    q = (request.args.get("q") or "").strip()
+    size = int(request.args.get("size") or 6)
+
+    if not q or len(q) < 2:
+        return jsonify({"suggestions": []}), 200
+
+    es = get_es_client()
+    index = get_ticket_index_name()
+
+    # 1) Filter docs that start with the prefix in either company_name or brand
+    # 2) Aggregate top unique values from both fields
+    body = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "should": [
+                    {"prefix": {"company_name.raw_ci": q.lower()}},
+                    {"prefix": {"brand.raw": q}},
+                ],
+                "minimum_should_match": 1
+            }
+        },
+        "aggs": {
+            "company_suggest": {"terms": {"field": "company_name.raw", "size": size}},
+            "brand_suggest":   {"terms": {"field": "brand.raw",         "size": size}},
+        }
+    }
+
+    try:
+        resp = es.search(index=index, body=body)
+        comps  = [b["key"] for b in resp.get("aggregations", {}).get("company_suggest", {}).get("buckets", [])]
+        brands = [b["key"] for b in resp.get("aggregations", {}).get("brand_suggest",   {}).get("buckets", [])]
+
+        # Merge + de-dup while preserving order; trim to requested size
+        seen, out = set(), []
+        for name in comps + brands:
+            if name and name not in seen:
+                seen.add(name)
+                out.append(name)
+            if len(out) >= size:
+                break
+
+        return jsonify({"suggestions": out}), 200
+    except Exception as e:
+        # Don’t break the UI if ES hiccups
+        logging.error(f"Suggest error: {e}")
+        return jsonify({"suggestions": []}), 200
