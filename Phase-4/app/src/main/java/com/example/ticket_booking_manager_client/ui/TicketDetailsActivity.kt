@@ -6,9 +6,11 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
 import com.example.ticket_booking_manager_client.R
 import com.example.ticket_booking_manager_client.data.Repository
+import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
@@ -32,10 +34,11 @@ class TicketDetailsActivity : AppCompatActivity() {
         repo = Repository(this)
         ticketId = intent.getIntExtra("ticket_id", -1)
 
-        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack)?.apply {
-            title = getString(R.string.ticket_details)
-            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
-        }
+        // Back toolbar (Option 1)
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbarBack)
+        toolbar.title = getString(R.string.ticket_details)
+        toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.ic_arrow_back_24)
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         loadDetails()
 

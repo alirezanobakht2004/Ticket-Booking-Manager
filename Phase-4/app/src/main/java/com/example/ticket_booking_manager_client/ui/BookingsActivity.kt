@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,7 +17,7 @@ import com.example.ticket_booking_manager_client.R
 import com.example.ticket_booking_manager_client.data.Repository
 import com.example.ticket_booking_manager_client.data.remote.models.Reservation
 import kotlinx.coroutines.launch
-
+import com.google.android.material.appbar.MaterialToolbar
 class BookingsActivity : AppCompatActivity() {
     private lateinit var repo: Repository
     private lateinit var activeAdapter: ReservationListAdapter
@@ -42,10 +43,10 @@ class BookingsActivity : AppCompatActivity() {
         historyRV.layoutManager = LinearLayoutManager(this)
         historyRV.adapter = historyAdapter
 
-        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBack)?.apply {
-            title = getString(R.string.reservations)
-            setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
-        }
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbarBack)
+        toolbar.title = getString(R.string.reservations)
+        toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.ic_arrow_back_24)
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         swipe.setOnRefreshListener { loadAll() }
 

@@ -90,8 +90,10 @@ class SearchActivity : AppCompatActivity() {
 
         findViewById<MaterialToolbar>(R.id.toolbarBack).apply {
             title = getString(R.string.search_tickets)
+            navigationIcon = resources.getDrawable(R.drawable.ic_arrow_back_24, theme)
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
         }
+
 
         // Prefill defaults
         dateEdit.setText(defaultDate)
