@@ -38,7 +38,7 @@
         <activity android:name=".ui.RegisterActivity" android:exported="false" />
         <activity android:name=".ui.DashboardActivity" android:exported="false" />
         <activity android:name=".ui.OtpActivity" android:exported="false" />
-
+        <activity android:name=".ui.ProfileActivity" android:exported="false" android:label="@string/profile" />
     </application>
 
 

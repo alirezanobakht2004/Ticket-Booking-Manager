@@ -36,4 +36,15 @@
     <string name="let_expire_toast">Reservation will expire automatically.</string>
     <string name="cancel">Cancel</string>
 
+    <string name="profile">Profile</string>
+    <string name="profile_subtitle">Update your personal details</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="updating">Updating…</string>
+    <string name="cities_load_failed">Failed to load cities</string>
+    <string name="nothing_to_update">Nothing to update</string>
+    <string name="profile_updated">Profile updated successfully</string>
+    <string name="invalid_email">Enter a valid email</string>
+    <string name="dashboard_profile_desc">View and update your profile details</string>
+
 </resources>

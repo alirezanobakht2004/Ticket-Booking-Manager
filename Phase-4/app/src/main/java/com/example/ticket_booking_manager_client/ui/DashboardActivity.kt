@@ -29,6 +29,13 @@ class DashboardActivity : AppCompatActivity() {
             startActivity(Intent(this, BookingsActivity::class.java))
         }
 
+        // DashboardActivity.kt
+        findViewById<MaterialCardView>(R.id.cardProfile).setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+
+
         // Add more cards later (profile, settings, support, etc.)
         // findViewById<MaterialCardView>(R.id.cardProfile).setOnClickListener { ... }
     }
