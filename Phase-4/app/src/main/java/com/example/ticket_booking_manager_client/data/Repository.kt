@@ -36,6 +36,17 @@ class Repository (context: Context) {
             Log.d("APP/Repo", "getCities() -> code=${resp.code()}")
         }
 
+    // --- Suggestions (NEW) ---
+    suspend fun suggestCompanies(prefix: String, size: Int = 6): List<String> = try {
+        val resp = api.suggestCompanies(prefix, size)
+        if (resp.isSuccessful) {
+            resp.body()?.suggestions.orEmpty()
+        } else emptyList()
+    } catch (e: Exception) {
+        Log.w("APP/Repo", "suggestCompanies('$prefix') failed: ${e.message}")
+        emptyList()
+    }
+
     // Tickets
     suspend fun searchTickets(
         originId: Int,
@@ -54,7 +65,7 @@ class Repository (context: Context) {
         originId, destinationId, travelDate, vehicleType,
         minPrice, maxPrice, company, depStart, depEnd, travelClass,
         page, pageSize
-    ).also { resp: Response<TicketsSearchResponse> ->
+    ).also { resp: Response<SearchResponse> ->
         Log.d(
             "APP/Repo",
             "searchTickets(origin=$originId, dest=$destinationId, date=$travelDate, vehicle=$vehicleType, page=$page, size=$pageSize) -> code=${resp.code()}"
@@ -107,5 +118,4 @@ class Repository (context: Context) {
     // Repository.kt
     suspend fun payReservation(reservationId: Int, method: String) =
         payForReservation(reservationId, method)
-
 }

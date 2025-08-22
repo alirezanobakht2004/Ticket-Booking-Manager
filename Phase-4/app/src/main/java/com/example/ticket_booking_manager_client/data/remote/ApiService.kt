@@ -38,7 +38,14 @@ interface ApiService {
         @Query("travel_class") travelClass: Int? = null,
         @Query("page") page: Int = 1,
         @Query("page_size") pageSize: Int = 20
-    ): Response<TicketsSearchResponse>
+    ): Response<SearchResponse>
+
+    // Suggest (NEW)
+    @GET("api/tickets/suggest/company")
+    suspend fun suggestCompanies(
+        @Query("q") prefix: String,
+        @Query("size") size: Int = 6
+    ): Response<SuggestResponse>
 
     @GET("api/tickets/details/{ticket_id}")
     suspend fun getTicketDetails(@Path("ticket_id") ticketId: Int): Response<TicketDetailsResponse>
@@ -47,7 +54,6 @@ interface ApiService {
     suspend fun checkCancelPenalty(
         @Path("ticket_id") ticketId: Int
     ): Response<CancelPenaltyEnvelope>
-
 
     @POST("api/tickets/cancel/{ticket_id}")
     suspend fun cancelTicket(@Path("ticket_id") ticketId: Int): Response<CancelPerformResponse>
@@ -74,6 +80,4 @@ interface ApiService {
         @Path("reservation_id") reservationId: Int,
         @Body body: PaymentBody
     ): Response<PaymentResponse>
-
-
 }

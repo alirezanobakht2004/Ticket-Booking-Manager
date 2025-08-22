@@ -13,9 +13,11 @@ import com.example.ticket_booking_manager_client.data.remote.models.City
 import com.example.ticket_booking_manager_client.data.remote.models.TicketListItem
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.concurrent.schedule
 
 class SearchActivity : AppCompatActivity() {
     private lateinit var repo: Repository
@@ -25,11 +27,10 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var vehicleTypeSpinner: Spinner
     private lateinit var minPriceEdit: EditText
     private lateinit var maxPriceEdit: EditText
-    private lateinit var companyEdit: EditText
+    private lateinit var companyEdit: MaterialAutoCompleteTextView
     private lateinit var depStartEdit: EditText
     private lateinit var depEndEdit: EditText
     private lateinit var travelClassEdit: EditText
-
 
     private lateinit var resultsRV: androidx.recyclerview.widget.RecyclerView
     private lateinit var adapter: TicketsAdapter
@@ -38,12 +39,16 @@ class SearchActivity : AppCompatActivity() {
 
     private var cities: List<City> = emptyList()
 
-    // Pagination controls (NEW)
+    // Pagination
     private var page = 1
     private var pageSize = 20
     private lateinit var pageInfo: TextView
     private lateinit var pagePrev: ImageButton
     private lateinit var pageNext: ImageButton
+
+    // Suggest
+    private var suggestAdapter: ArrayAdapter<String>? = null
+    private var suggestTimer: Timer? = null
 
     // Defaults
     private val defaultOriginId = 28
@@ -72,7 +77,7 @@ class SearchActivity : AppCompatActivity() {
         depEndEdit = findViewById(R.id.depEndEdit)
         travelClassEdit = findViewById(R.id.travelClassEdit)
 
-        // Pagination views (NEW: ensure you add these to layout)
+        // Pagination views
         pageInfo = findViewById(R.id.pageInfo)
         pagePrev = findViewById(R.id.pagePrev)
         pageNext = findViewById(R.id.pageNext)
@@ -94,7 +99,6 @@ class SearchActivity : AppCompatActivity() {
             setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
         }
 
-
         // Prefill defaults
         dateEdit.setText(defaultDate)
         minPriceEdit.setText(defaultMinPrice)
@@ -110,15 +114,38 @@ class SearchActivity : AppCompatActivity() {
         val vtIndex = vehicleTypes.indexOf(defaultVehicleTypeLabel).takeIf { it >= 0 } ?: 0
         vehicleTypeSpinner.setSelection(vtIndex, false)
 
+        // Company suggest adapter
+        suggestAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
+        companyEdit.setAdapter(suggestAdapter)
+        companyEdit.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val q = s?.toString()?.trim().orEmpty()
+                suggestTimer?.cancel()
+                if (q.length < 2) return
+                suggestTimer = Timer().apply {
+                    schedule(180) {
+                        lifecycleScope.launch {
+                            val items = repo.suggestCompanies(q)
+                            suggestAdapter?.clear()
+                            suggestAdapter?.addAll(items)
+                            if (companyEdit.isFocused) companyEdit.showDropDown()
+                        }
+                    }
+                }
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
         searchBtn.setOnClickListener {
             val dateText = dateEdit.text.toString().trim()
             if (dateText.isEmpty()) openDatePickerThenSearch() else {
-                page = 1 // reset pagination on new search (NEW)
+                page = 1
                 doSearch()
             }
         }
 
-        // Pagination actions (NEW)
+        // Pagination actions
         pagePrev.setOnClickListener {
             if (page > 1) {
                 page -= 1
@@ -164,8 +191,6 @@ class SearchActivity : AppCompatActivity() {
                 cities = emptyList()
             }
         }
-
-        // Optional: addTextChangedListeners with debounce for companyEdit to call suggest endpoint later.
     }
 
     private fun openDatePickerThenSearch() {
@@ -176,7 +201,7 @@ class SearchActivity : AppCompatActivity() {
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
             sdf.timeZone = TimeZone.getDefault()
             dateEdit.setText(sdf.format(Date(utcMillis)))
-            page = 1 // reset pagination (NEW)
+            page = 1
             doSearch()
         }
         picker.show(supportFragmentManager, "date")
@@ -200,7 +225,6 @@ class SearchActivity : AppCompatActivity() {
         val date = dateEdit.text.toString().trim()
 
         val vehicleTypeLabel = vehicleTypeSpinner.selectedItem?.toString()?.trim()
-        // Normalize to backend expectations (lowercase or null)
         val vehicleType = when (vehicleTypeLabel) {
             "Plane" -> "plane"
             "Bus" -> "bus"
@@ -240,11 +264,27 @@ class SearchActivity : AppCompatActivity() {
                 )
                 android.util.Log.d("APP/SEARCH", "searchTickets -> code=${resp.code()} success=${resp.isSuccessful}")
                 if (resp.isSuccessful) {
-                    val list: List<TicketListItem> = resp.body()?.tickets.orEmpty()
+                    val body = resp.body()
+                    val list: List<TicketListItem> = body?.tickets.orEmpty()
                     adapter.submitList(list)
+
+                    // Facets summary
+                    val f = body?.facets
+                    val vt = f?.vehicle_types?.joinToString { "${it.key}(${it.doc_count})" }.orEmpty()
+                    val rangeStr = when {
+                        f?.price_min != null && f.price_max != null -> "Price: ${f.price_min}–${f.price_max}"
+                        else -> ""
+                    }
+                    val approx = body?.approx_total?.let { "≈$it results" }.orEmpty()
+                    findViewById<TextView>(R.id.facetsSummary).text =
+                        listOf(rangeStr, vt, approx).filter { it.isNotBlank() }.joinToString("   •   ")
+
+                    // Enable "next" only if it looks like more pages exist
+                    pageNext.isEnabled = list.size >= pageSize
+
                     if (list.isEmpty() && page > 1) {
                         Toast.makeText(this@SearchActivity, "No more results", Toast.LENGTH_SHORT).show()
-                        if (page > 1) page -= 1
+                        page -= 1
                     }
                 } else {
                     val err = resp.errorBody()?.string()
@@ -264,13 +304,13 @@ class SearchActivity : AppCompatActivity() {
     private fun updatePageInfo() {
         pageInfo.text = "Page $page"
         pagePrev.isEnabled = page > 1
-        pageNext.isEnabled = true // Could be disabled if last page known
+        // pageNext is set based on results size in doSearch()
     }
 
     private fun setLoading(loadingNow: Boolean) {
         loading.visibility = if (loadingNow) View.VISIBLE else View.GONE
         searchBtn.isEnabled = !loadingNow
         pagePrev.isEnabled = !loadingNow && page > 1
-        pageNext.isEnabled = !loadingNow
+        pageNext.isEnabled = !loadingNow && pageNext.isEnabled
     }
 }

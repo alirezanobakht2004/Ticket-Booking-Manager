@@ -29,8 +29,29 @@ data class UpdateProfileBody(
 data class CitiesResponse(val status: String?, val cities: List<City> = emptyList())
 data class City(val location_id: Int, val title: String)
 
-// Tickets: search result line
+// Tickets: search results
+// (Keep old TicketsSearchResponse if used elsewhere, but new SearchResponse is used now)
 data class TicketsSearchResponse(val status: String?, val tickets: List<TicketListItem> = emptyList())
+
+data class SearchResponse(
+    val status: String?,
+    val tickets: List<TicketListItem> = emptyList(),
+    val approx_total: Int? = null,
+    val facets: Facets? = null
+)
+
+data class Facets(
+    val price_min: Double? = null,
+    val price_max: Double? = null,
+    val vehicle_types: List<FacetBucket> = emptyList(),
+    val companies: List<FacetBucket> = emptyList()
+)
+
+data class FacetBucket(
+    val key: String,
+    val doc_count: Int
+)
+
 data class TicketListItem(
     val ticket_id: Int,
     val source: Int,
@@ -68,6 +89,9 @@ data class TicketDetails(
     val food_service: Boolean?, val train_internet_connection: Boolean?, val train_closed_compartment: Boolean?
 )
 
+// Suggestions (NEW)
+data class SuggestResponse(val suggestions: List<String> = emptyList())
+
 // Reserve / Reservations
 data class ReserveBody(val ticket_id: Int, val validity_minutes: Int = 10)
 data class ReserveResponse(val status: String?, val reservation_id: Int?)
@@ -82,7 +106,7 @@ data class Reservation(
 )
 
 // Payments
-data class PaymentBody(val payment_method: String) // e.g. "CARD"
+data class PaymentBody(val payment_method: String)
 data class PaymentResponse(
     val status: String?,
     val message: String?,
@@ -113,7 +137,6 @@ data class CancelPerformResponse(
     val data: CancelPerformData?
 )
 
-// models
 data class CancelPenaltyEnvelope(
     val status: String?,
     val data: CancelPenaltyData?
