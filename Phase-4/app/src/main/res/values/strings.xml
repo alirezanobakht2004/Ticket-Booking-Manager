@@ -24,4 +24,16 @@
     <string name="phone">Phone</string>
     <string name="previous">previous</string>
     <string name="next">next</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="select_payment_method">Select payment method</string>
+    <string name="payment_success">Payment successful</string>
+
+    <!-- Let-expire dialog -->
+    <string name="let_expire_title">Let reservation expire?</string>
+    <string name="let_expire_msg">This won’t purchase the ticket. The reservation will vanish after it expires or when you refresh.</string>
+    <string name="let_expire_cta">Let expire</string>
+    <string name="let_expire_toast">Reservation will expire automatically.</string>
+    <string name="cancel">Cancel</string>
+
 </resources>

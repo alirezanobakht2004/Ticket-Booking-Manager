@@ -112,6 +112,23 @@ data class CancelPerformResponse(
     val status: String?,
     val data: CancelPerformData?
 )
+
+// models
+data class CancelPenaltyEnvelope(
+    val status: String?,
+    val data: CancelPenaltyData?
+)
+
+data class CancelPenaltyData(
+    val ticket_id: Int?,
+    val ticket_price: Double?,
+    val departure_time: String?,
+    val hours_remaining: Double?,
+    val penalty_percentage: Int?,
+    val penalty_amount: Double?,
+    val refundable_amount: Double?
+)
+
 data class CancelPerformData(
     val message: String?,
     val reservation_id: Int?,

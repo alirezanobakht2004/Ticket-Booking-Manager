@@ -16,7 +16,7 @@ interface ApiService {
     @POST("api/auth/signup")
     suspend fun signup(@Body body: SignupBody): Response<LoginResponse>
 
-    @POST("api/auth/profile/update")
+    @POST("api/user/profile/update")
     suspend fun updateProfile(@Body body: UpdateProfileBody): Response<ApiMessage>
 
     // --- Cities ---
@@ -44,7 +44,10 @@ interface ApiService {
     suspend fun getTicketDetails(@Path("ticket_id") ticketId: Int): Response<TicketDetailsResponse>
 
     @GET("api/tickets/cancel/check/{ticket_id}")
-    suspend fun checkCancelPenalty(@Path("ticket_id") ticketId: Int): Response<CancelPenaltyResponse>
+    suspend fun checkCancelPenalty(
+        @Path("ticket_id") ticketId: Int
+    ): Response<CancelPenaltyEnvelope>
+
 
     @POST("api/tickets/cancel/{ticket_id}")
     suspend fun cancelTicket(@Path("ticket_id") ticketId: Int): Response<CancelPerformResponse>
@@ -71,4 +74,6 @@ interface ApiService {
         @Path("reservation_id") reservationId: Int,
         @Body body: PaymentBody
     ): Response<PaymentResponse>
+
+
 }

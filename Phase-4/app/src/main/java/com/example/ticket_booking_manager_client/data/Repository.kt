@@ -67,7 +67,7 @@ class Repository (context: Context) {
         }
 
     suspend fun checkCancel(ticketId: Int) =
-        api.checkCancelPenalty(ticketId).also { resp: Response<CancelPenaltyResponse> ->
+        api.checkCancelPenalty(ticketId).also { resp: Response<CancelPenaltyEnvelope> ->
             Log.d("APP/Repo", "checkCancel($ticketId) -> code=${resp.code()}")
         }
 
@@ -103,4 +103,9 @@ class Repository (context: Context) {
         api.payForReservation(reservationId, PaymentBody(payment_method = method)).also { resp: Response<PaymentResponse> ->
             Log.d("APP/Repo", "payForReservation(reservation=$reservationId, method=$method) -> code=${resp.code()}")
         }
+
+    // Repository.kt
+    suspend fun payReservation(reservationId: Int, method: String) =
+        payForReservation(reservationId, method)
+
 }
