@@ -22,4 +22,6 @@
     <string name="departure_end_hhmm">departure_end_hhmm</string>
     <string name="travel_class">travel_class</string>
     <string name="phone">Phone</string>
+    <string name="previous">previous</string>
+    <string name="next">next</string>
 </resources>

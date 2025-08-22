@@ -38,19 +38,23 @@ class SearchActivity : AppCompatActivity() {
 
     private var cities: List<City> = emptyList()
 
-    // Required defaults
+    // Pagination controls (NEW)
+    private var page = 1
+    private var pageSize = 20
+    private lateinit var pageInfo: TextView
+    private lateinit var pagePrev: ImageButton
+    private lateinit var pageNext: ImageButton
+
+    // Defaults
     private val defaultOriginId = 28
     private val defaultDestinationId = 45
     private val defaultDate = "2025-05-10"
-
-    // Optional defaults (per your URL)
-    private val defaultVehicleTypeLabel = "Plane" // UI label; API value "plane"
+    private val defaultVehicleTypeLabel = "Plane"
     private val defaultMinPrice = "50"
     private val defaultMaxPrice = "500"
     private val defaultCompany = "Flores, Strong and Chase"
     private val defaultDepStart = "08:00"
     private val defaultDepEnd = "20:00"
-    private val defaultTravelClassLabel = "All" // “All” => do not send
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +71,11 @@ class SearchActivity : AppCompatActivity() {
         depStartEdit = findViewById(R.id.depStartEdit)
         depEndEdit = findViewById(R.id.depEndEdit)
         travelClassEdit = findViewById(R.id.travelClassEdit)
+
+        // Pagination views (NEW: ensure you add these to layout)
+        pageInfo = findViewById(R.id.pageInfo)
+        pagePrev = findViewById(R.id.pagePrev)
+        pageNext = findViewById(R.id.pageNext)
 
         resultsRV = findViewById(R.id.resultsRV)
         searchBtn = findViewById(R.id.searchBtn)
@@ -91,25 +100,36 @@ class SearchActivity : AppCompatActivity() {
         companyEdit.setText(defaultCompany)
         depStartEdit.setText(defaultDepStart)
         depEndEdit.setText(defaultDepEnd)
-        // Travel class “All” -> leave blank so it’s omitted from the query
         travelClassEdit.setText("")
 
-        // Vehicle type spinner labels
         val vehicleTypes = listOf("All", "Plane", "Bus", "Train")
-        vehicleTypeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, vehicleTypes)
+        vehicleTypeSpinner.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, vehicleTypes)
         val vtIndex = vehicleTypes.indexOf(defaultVehicleTypeLabel).takeIf { it >= 0 } ?: 0
         vehicleTypeSpinner.setSelection(vtIndex, false)
 
         searchBtn.setOnClickListener {
             val dateText = dateEdit.text.toString().trim()
-            if (dateText.isEmpty()) {
-                openDatePickerThenSearch()
-            } else {
+            if (dateText.isEmpty()) openDatePickerThenSearch() else {
+                page = 1 // reset pagination on new search (NEW)
                 doSearch()
             }
         }
 
-        // Load cities and select defaults by id
+        // Pagination actions (NEW)
+        pagePrev.setOnClickListener {
+            if (page > 1) {
+                page -= 1
+                doSearch()
+            }
+        }
+        pageNext.setOnClickListener {
+            page += 1
+            doSearch()
+        }
+        updatePageInfo()
+
+        // Load cities
         lifecycleScope.launch {
             android.util.Log.d("APP/SEARCH", "Loading cities for spinners…")
             try {
@@ -127,7 +147,6 @@ class SearchActivity : AppCompatActivity() {
                         val destIndex = cities.indexOfFirst { it.location_id == defaultDestinationId }.takeIf { it >= 0 } ?: (if (cities.size > 1) 1 else 0)
                         originSpinner.setSelection(originIndex, false)
                         destinationSpinner.setSelection(destIndex, false)
-                        android.util.Log.d("APP/SEARCH", "Cities loaded: ${cities.size}, defaults originIdx=$originIndex destIdx=$destIndex")
                     } else {
                         Toast.makeText(this@SearchActivity, "No cities returned", Toast.LENGTH_SHORT).show()
                     }
@@ -143,17 +162,19 @@ class SearchActivity : AppCompatActivity() {
                 cities = emptyList()
             }
         }
+
+        // Optional: addTextChangedListeners with debounce for companyEdit to call suggest endpoint later.
     }
 
     private fun openDatePickerThenSearch() {
-        val picker = MaterialDatePicker.Builder
-            .datePicker()
+        val picker = MaterialDatePicker.Builder.datePicker()
             .setTitleText("Select travel date")
             .build()
         picker.addOnPositiveButtonClickListener { utcMillis ->
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
             sdf.timeZone = TimeZone.getDefault()
             dateEdit.setText(sdf.format(Date(utcMillis)))
+            page = 1 // reset pagination (NEW)
             doSearch()
         }
         picker.show(supportFragmentManager, "date")
@@ -176,13 +197,13 @@ class SearchActivity : AppCompatActivity() {
         val destId = cities[destIdx].location_id
         val date = dateEdit.text.toString().trim()
 
-        // Map vehicle type label to API value or omit for “All”
         val vehicleTypeLabel = vehicleTypeSpinner.selectedItem?.toString()?.trim()
+        // Normalize to backend expectations (lowercase or null)
         val vehicleType = when (vehicleTypeLabel) {
-            "Plane" -> "Plane"
-            "Bus" -> "Bus"
-            "Train" -> "Train"
-            else -> null // All or unknown => omit
+            "Plane" -> "plane"
+            "Bus" -> "bus"
+            "Train" -> "train"
+            else -> null
         }
 
         val minPrice = minPriceEdit.text.toString().trim().takeIf { it.isNotEmpty() }?.toDoubleOrNull()
@@ -191,13 +212,11 @@ class SearchActivity : AppCompatActivity() {
 
         val depStart = depStartEdit.text.toString().trim().takeIf { it.matches(Regex("\\d{2}:\\d{2}")) }
         val depEnd = depEndEdit.text.toString().trim().takeIf { it.matches(Regex("\\d{2}:\\d{2}")) }
-
-        // Travel class: blank means All -> omit
         val travelClass = travelClassEdit.text.toString().trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
 
         android.util.Log.d(
             "APP/SEARCH",
-            "doSearch originId=$originId destId=$destId date=$date vehicle=$vehicleType min=$minPrice max=$maxPrice company=$company depStart=$depStart depEnd=$depEnd class=$travelClass"
+            "doSearch originId=$originId destId=$destId date=$date vehicle=$vehicleType min=$minPrice max=$maxPrice company=$company depStart=$depStart depEnd=$depEnd class=$travelClass page=$page size=$pageSize"
         )
 
         setLoading(true)
@@ -213,15 +232,17 @@ class SearchActivity : AppCompatActivity() {
                     company = company,
                     depStart = depStart,
                     depEnd = depEnd,
-                    travelClass = travelClass
+                    travelClass = travelClass,
+                    page = page,
+                    pageSize = pageSize
                 )
                 android.util.Log.d("APP/SEARCH", "searchTickets -> code=${resp.code()} success=${resp.isSuccessful}")
                 if (resp.isSuccessful) {
                     val list: List<TicketListItem> = resp.body()?.tickets.orEmpty()
-                    android.util.Log.d("APP/SEARCH", "searchTickets results=${list.size} first=${list.firstOrNull()}")
                     adapter.submitList(list)
-                    if (list.isEmpty()) {
-                        Toast.makeText(this@SearchActivity, "No tickets found", Toast.LENGTH_SHORT).show()
+                    if (list.isEmpty() && page > 1) {
+                        Toast.makeText(this@SearchActivity, "No more results", Toast.LENGTH_SHORT).show()
+                        if (page > 1) page -= 1
                     }
                 } else {
                     val err = resp.errorBody()?.string()
@@ -233,12 +254,21 @@ class SearchActivity : AppCompatActivity() {
                 Toast.makeText(this@SearchActivity, "Network error: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 setLoading(false)
+                updatePageInfo()
             }
         }
+    }
+
+    private fun updatePageInfo() {
+        pageInfo.text = "Page $page"
+        pagePrev.isEnabled = page > 1
+        pageNext.isEnabled = true // Could be disabled if last page known
     }
 
     private fun setLoading(loadingNow: Boolean) {
         loading.visibility = if (loadingNow) View.VISIBLE else View.GONE
         searchBtn.isEnabled = !loadingNow
+        pagePrev.isEnabled = !loadingNow && page > 1
+        pageNext.isEnabled = !loadingNow
     }
 }

@@ -35,7 +35,9 @@ interface ApiService {
         @Query("company_name") company: String? = null,
         @Query("departure_start") depStart: String? = null,
         @Query("departure_end") depEnd: String? = null,
-        @Query("travel_class") travelClass: Int? = null
+        @Query("travel_class") travelClass: Int? = null,
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 20
     ): Response<TicketsSearchResponse>
 
     @GET("api/tickets/details/{ticket_id}")

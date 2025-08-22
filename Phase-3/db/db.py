@@ -627,3 +627,212 @@ def get_flat_ticket_by_id(ticket_id: int) -> Optional[Dict]:
             return cursor.fetchone()
     finally:
         conn.close()
+        
+def get_full_reservation_details(reservation_id: int):
+    """
+    Fetch a reservation with requester details and all its tickets (flattened).
+    Adjust field names to your schema as needed.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            reservation_sql = """
+                SELECT
+                    r.reservation_id,
+                    r.passenger_id,
+                    r.status,
+                    r.reservation_date,
+                    r.expiry_time,
+                    r.created_at,
+                    r.updated_at,
+                    p.person_id,
+                    p.first_name,
+                    p.last_name,
+                    p.email,
+                    p.phone_number
+                FROM reservation r
+                JOIN passenger ps ON r.passenger_id = ps.person_id
+                JOIN person p ON ps.person_id = p.person_id
+                WHERE r.reservation_id = %s
+            """
+            cursor.execute(reservation_sql, (reservation_id,))
+            reservation = cursor.fetchone()
+            if not reservation:
+                return None
+
+            tickets_sql = """
+                SELECT
+                    t.ticket_id,
+                    t.price,
+                    t.departure_time,
+                    t.arrival_time,
+                    src.title AS origin_city,
+                    dst.title AS destination_city
+                FROM ticket t
+                JOIN location src ON t.source = src.location_id
+                JOIN location dst ON t.destination = dst.location_id
+                WHERE t.reservation_id = %s
+                ORDER BY t.departure_time ASC
+            """
+            cursor.execute(tickets_sql, (reservation_id,))
+            tickets = cursor.fetchall() or []
+
+            reservation["tickets"] = tickets
+            return reservation
+    finally:
+        conn.close()
+        
+def get_payments_by_status(status: str) -> list[dict]:
+    """
+    Return payments filtered by status (e.g., 'FAILED', 'SUCCESSFUL', 'PENDING'),
+    with basic reservation and user context for admin views.
+    Adjust field names if your schema differs.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT
+                    pay.payment_id,
+                    pay.reservation_id,
+                    pay.amount,
+                    pay.payment_method,
+                    pay.status,
+                    pay.transaction_reference,
+                    pay.created_at,
+                    r.passenger_id,
+                    r.status AS reservation_status,
+                    p.person_id,
+                    p.first_name,
+                    p.last_name,
+                    p.email,
+                    p.phone_number
+                FROM payment pay
+                LEFT JOIN reservation r ON pay.reservation_id = r.reservation_id
+                LEFT JOIN passenger ps ON r.passenger_id = ps.person_id
+                LEFT JOIN person p ON ps.person_id = p.person_id
+                WHERE pay.status = %s
+                ORDER BY pay.created_at DESC
+            """
+            cursor.execute(sql, (status,))
+            return cursor.fetchall()
+    finally:
+        conn.close()
+        
+def get_passenger_id_from_person_id(person_id: int) -> Optional[int]:
+    """
+    Returns the passenger_id (same as person_id in your schema) if a passenger row exists.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = "SELECT person_id FROM passenger WHERE person_id = %s"
+            cursor.execute(sql, (person_id,))
+            row = cursor.fetchone()
+            return row["person_id"] if row else None
+    finally:
+        conn.close()
+        
+def get_user_tickets_by_filter(
+    person_id: int,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,  # 'YYYY-MM-DD'
+    end_date: Optional[str] = None,    # 'YYYY-MM-DD'
+    vehicle_type: Optional[str] = None # 'plane'|'bus'|'train'
+) -> list[dict]:
+    """
+    Returns tickets for a given user (by person_id), with optional filters:
+      - reservation status (e.g., 'PENDING','CONFIRMED','CANCELLED')
+      - date range on ticket.departure_time (YYYY-MM-DD strings)
+      - vehicle_type filter via joins
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT
+                    t.ticket_id,
+                    t.price,
+                    t.departure_time,
+                    t.arrival_time,
+                    src.title AS origin_city,
+                    dst.title AS destination_city,
+                    r.reservation_id,
+                    r.status AS reservation_status,
+                    CASE
+                        WHEN b.vehicle_id IS NOT NULL THEN 'bus'
+                        WHEN p.vehicle_id IS NOT NULL THEN 'plane'
+                        WHEN tr.vehicle_id IS NOT NULL THEN 'train'
+                        ELSE 'unknown'
+                    END AS vehicle_type
+                FROM ticket t
+                JOIN reservation r ON t.reservation_id = r.reservation_id
+                JOIN passenger ps ON r.passenger_id = ps.person_id
+                JOIN person pe ON ps.person_id = pe.person_id
+                JOIN location src ON t.source = src.location_id
+                JOIN location dst ON t.destination = dst.location_id
+                JOIN vehicle v ON t.vehicle_id = v.vehicle_id
+                LEFT JOIN bus b ON v.vehicle_id = b.vehicle_id
+                LEFT JOIN plane p ON v.vehicle_id = p.vehicle_id
+                LEFT JOIN train tr ON v.vehicle_id = tr.vehicle_id
+                WHERE pe.person_id = %s
+            """
+            params: list[Any] = [person_id]
+
+            if status:
+                sql += " AND r.status = %s "
+                params.append(status)
+
+            if start_date:
+                sql += " AND DATE(t.departure_time) >= %s "
+                params.append(start_date)
+
+            if end_date:
+                sql += " AND DATE(t.departure_time) <= %s "
+                params.append(end_date)
+
+            if vehicle_type:
+                if vehicle_type == "plane":
+                    sql += " AND p.vehicle_id IS NOT NULL "
+                elif vehicle_type == "bus":
+                    sql += " AND b.vehicle_id IS NOT NULL "
+                elif vehicle_type == "train":
+                    sql += " AND tr.vehicle_id IS NOT NULL "
+
+            sql += " ORDER BY t.departure_time DESC "
+
+            cursor.execute(sql, params)
+            return cursor.fetchall()
+    finally:
+        conn.close()
+        
+def create_report(
+    person_id: int,
+    ticket_id: int,
+    report_type: str,
+    report_text: str,
+    status: str = "OPEN"
+) -> int:
+    """
+    Inserts a new report into the 'report' table and returns the created report_id.
+    Columns used (adjust if your schema differs):
+      - person_id: who reports
+      - ticket_id: the ticket being reported (nullable if your schema allows)
+      - report_type: e.g., 'BUG', 'PAYMENT', 'CANCEL', 'OTHER'
+      - report_text: free text
+      - status: e.g., 'OPEN', 'IN_REVIEW', 'RESOLVED', 'REJECTED'
+      - created_at: default NOW() at DB level or set explicitly here
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                INSERT INTO report (person_id, ticket_id, report_type, report_text, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            now = datetime.utcnow()
+            cursor.execute(sql, (person_id, ticket_id, report_type, report_text, status, now))
+            conn.commit()
+            return cursor.lastrowid
+    finally:
+        conn.close()

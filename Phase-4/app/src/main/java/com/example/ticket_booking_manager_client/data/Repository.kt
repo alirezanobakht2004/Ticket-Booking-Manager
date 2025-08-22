@@ -38,12 +38,27 @@ class Repository (context: Context) {
 
     // Tickets
     suspend fun searchTickets(
-        originId: Int, destinationId: Int, travelDate: String,
-        vehicleType: String? = null, minPrice: Double? = null, maxPrice: Double? = null,
-        company: String? = null, depStart: String? = null, depEnd: String? = null,
-        travelClass: Int? = null
-    ) = api.searchTickets(originId, destinationId, travelDate, vehicleType, minPrice, maxPrice, company, depStart, depEnd, travelClass).also { resp: Response<TicketsSearchResponse> ->
-        Log.d("APP/Repo", "searchTickets(origin=$originId, dest=$destinationId, date=$travelDate, vehicle=$vehicleType) -> code=${resp.code()}")
+        originId: Int,
+        destinationId: Int,
+        travelDate: String,
+        vehicleType: String? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        company: String? = null,
+        depStart: String? = null,
+        depEnd: String? = null,
+        travelClass: Int? = null,
+        page: Int = 1,
+        pageSize: Int = 20
+    ) = api.searchTickets(
+        originId, destinationId, travelDate, vehicleType,
+        minPrice, maxPrice, company, depStart, depEnd, travelClass,
+        page, pageSize
+    ).also { resp: Response<TicketsSearchResponse> ->
+        Log.d(
+            "APP/Repo",
+            "searchTickets(origin=$originId, dest=$destinationId, date=$travelDate, vehicle=$vehicleType, page=$page, size=$pageSize) -> code=${resp.code()}"
+        )
     }
 
     suspend fun ticketDetails(ticketId: Int) =
