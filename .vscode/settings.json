@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./Phase-3"
+    ]
+}

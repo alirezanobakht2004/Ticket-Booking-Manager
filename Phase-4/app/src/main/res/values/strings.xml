@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?> <resources> <string name="app_name">Ticket Booking Manager</string> <string name="home_subtitle">Find, compare and book your next trip</string> <string name="login">Login</string> <string name="logout">Logout</string> <string name="book_tickets">Book Tickets</string> <string name="view_bookings">View Bookings</string> <string name="skip">Skip</string> <string name="get_started">Get started</string> <string name="search">Search</string> <string name="search_tickets">Search tickets</string> <string name="yyyymmdd">YYYY-MM-DD</string> <string name="phone_or_email">Phone or Email</string> <string name="request_otp">Request OTP</string> <string name="enter_otp">Enter OTP</string> <string name="verify_and_continue">Verify and Continue</string> <string name="login_title">Sign in with OTP</string> <string name="login_helper">We’ll send a one-time code to your phone or email.</string> <string name="reservations">Reservations</string> <string name="ticket_details">Ticket details</string> <string name="register">Register</string>
+    <string name="register_title">Create your account</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="password">Password</string>
+    <string name="register_success">Registered successfully</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="dashboard_title">Welcome</string>
+    <string name="dashboard_subtitle">What would you like to do?</string>
+    <string name="dashboard_book_desc">Search and book flights, buses or trains</string>
+    <string name="dashboard_bookings_desc">See active and past reservations</string>
+    <string name="select_city">Select city</string>
+    <string name="resend_otp">Resend OTP</string>
+    <string name="otp_sent">We’ve sent you a one-time code.</string>
+    <string name="otp_sent_to">We’ve sent a code to %1$s</string>
+    <string name="otp_resent">OTP Resent</string>
+    <string name="email">Email</string>
+    <string name="min_price">min_price</string>
+    <string name="max_price">max_price</string>
+    <string name="company_name">company_name</string>
+    <string name="departure_start_hhmm">departure_start_hhmm</string>
+    <string name="departure_end_hhmm">departure_end_hhmm</string>
+    <string name="travel_class">travel_class</string>
+    <string name="phone">Phone</string>
+    <string name="previous">previous</string>
+    <string name="next">next</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="select_payment_method">Select payment method</string>
+    <string name="payment_success">Payment successful</string>
+
+    <!-- Let-expire dialog -->
+    <string name="let_expire_title">Let reservation expire?</string>
+    <string name="let_expire_msg">This won’t purchase the ticket. The reservation will vanish after it expires or when you refresh.</string>
+    <string name="let_expire_cta">Let expire</string>
+    <string name="let_expire_toast">Reservation will expire automatically.</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="profile">Profile</string>
+    <string name="profile_subtitle">Update your personal details</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="updating">Updating…</string>
+    <string name="cities_load_failed">Failed to load cities</string>
+    <string name="nothing_to_update">Nothing to update</string>
+    <string name="profile_updated">Profile updated successfully</string>
+    <string name="invalid_email">Enter a valid email</string>
+    <string name="dashboard_profile_desc">View and update your profile details</string>
+
+</resources>

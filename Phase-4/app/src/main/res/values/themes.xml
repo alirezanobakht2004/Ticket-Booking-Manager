@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?> <resources> <style name="Theme.TicketBookingManagerClient" parent="Theme.Material3.DayNight.NoActionBar"> <item name="android:statusBarColor">?attr/colorSurface</item> <item name="android:navigationBarColor">?attr/colorSurface</item> <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Material3.HeadlineMedium</item> <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Material3.HeadlineSmall</item> <item name="textAppearanceBodyMedium">@style/TextAppearance.Material3.BodyMedium</item> <item name="buttonStyle">@style/Widget.App.Button</item> <item name="materialButtonStyle">@style/Widget.App.MaterialButton</item> </style>
+
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+    </style>
+
+    <style name="Widget.App.MaterialButton" parent="Widget.Material3.Button">
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <style name="Widget.App.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="titleTextColor">?attr/colorOnSurface</item>
+        <item name="navigationIconTint">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="Theme.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
+        <!-- keep icon or a simple vector here -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.TicketBookingManagerClient</item>
+    </style>
+</resources>

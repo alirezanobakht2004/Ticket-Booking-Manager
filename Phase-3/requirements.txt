@@ -1,0 +1,11 @@
+Flask
+Flask-Cors
+PyMySQL
+redis
+python-dotenv
+bcrypt
+pyjwt
+cryptography
+smsir-python
+request
+elasticsearch

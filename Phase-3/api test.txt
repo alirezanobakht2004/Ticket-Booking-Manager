@@ -1,0 +1,108 @@
+1)
+
+Content-Type: application/json
+
+POST
+
+http://localhost:5000/api/auth/login/request-otp
+
+{
+  "email": "user1@example.com"
+}
+
+http://localhost:5000/api/auth/login/verify-otp
+
+{
+  "email": "user1@example.com",
+  "otp": "278895"
+}
+
+
+2)
+
+Content-Type: application/json
+
+POST
+
+http://localhost:5000/api/auth/signup
+
+{
+  "first_name": "Ali",
+  "last_name": "Rezaei",
+  "email": "ali.rezaei@example.com",
+  "phone_number": "09123456789",
+  "city": "Tehran",
+  "password": "SuperSecret123"
+}
+
+3)
+
+Content-Type: application/json
+
+Authorization: Bearer <your_jwt_token>
+
+POST
+
+http://localhost:5000/api/auth/profile/update
+
+{
+  "first_name": "Asoi",
+  "last_name": "Rei",
+  "email": "kkkkali.reza@example.com",
+  "phone_number": "0913456789",
+  "city": "Tehran"
+}
+
+
+4)
+
+Content-Type: application/json
+
+GET
+
+http://localhost:5000/api/cities
+
+
+5)
+
+Content-Type: application/json
+
+GET
+
+http://localhost:5000/api/tickets/search?origin_id=28&destination_id=45&travel_date=2025-05-10
+
+http://localhost:5000/api/tickets/search?origin_id=1&destination_id=2&travel_date=2025-06-15&vehicle_type=plane&min_price=100&max_price=500&company_name=Air&departure_start=08:00&departure_end=20:00&travel_class=1
+
+6)
+
+Content-Type: application/json
+
+GET
+
+http://localhost:5000/api/tickets/details/<ticket_id>
+
+7)
+
+Content-Type: application/json
+
+Authorization: Bearer <your_jwt_token>
+
+Reserve ticket:
+POST 
+
+http://localhost:5000/api/reservations/reserve
+
+{
+"ticket_id": 123,
+"quantity": 2,
+"reservation_time": 10 // optional, duration in minutes
+}
+
+Get active reservations:
+GET http://localhost:5000/api/reservations/active
+
+
+Get reservation history:
+GET http://localhost:5000/api/reservations/history
+
+
